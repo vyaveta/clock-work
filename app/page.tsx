@@ -19,6 +19,8 @@ export default  function Page() {
     }
   }))
 
+  const testAi = useMutation(trpc.testAi.mutationOptions())
+
   return (
     <div className="flex min-h-svh p-6">
       <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
@@ -30,6 +32,10 @@ export default  function Page() {
          onClick={() => create.mutate()}
          >
           Create
+         </Button>
+
+         <Button disabled={testAi.isPending} onClick={() => testAi.mutate()} >
+          Test Ai
          </Button>
          </div>
       </div>
