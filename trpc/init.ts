@@ -1,3 +1,4 @@
+import "server-only";
 import { auth } from '@/lib/auth';
 import { requireAuth } from '@/lib/auth-utils';
 import { initTRPC, TRPCError } from '@trpc/server';

@@ -70,3 +70,8 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model WorkFlow {
+  id String @id @default(cuid())
+  name String 
+}

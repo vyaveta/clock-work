@@ -1,0 +1,10 @@
+procs:
+  inngest:
+    cmd: ["npm", "run", "inngest:dev"]
+    autostart: true
+    stop: "SIGTERM"
+
+  next:
+    cmd: ["npm", "run", "dev"]
+    autostart: true
+    stop: "SIGTERM"
