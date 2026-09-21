@@ -13,6 +13,7 @@ function ThemeProvider({
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
+      scriptProps={{ suppressHydrationWarning: true }}
       {...props}
     >
       <ThemeHotkey />

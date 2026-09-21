@@ -92,6 +92,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      href={`chart-${id}`}
+      precedence="high"
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
