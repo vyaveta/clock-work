@@ -1,9 +1,9 @@
-import "server-only";
 import { auth } from '@/lib/auth';
-import { requireAuth } from '@/lib/auth-utils';
+import { polarClient } from "@/lib/polar";
 import { initTRPC, TRPCError } from '@trpc/server';
 import { headers } from 'next/headers';
 import { cache } from 'react';
+import "server-only";
 
 export const createTRPCContext = cache(async () => {
     /**
@@ -27,6 +27,7 @@ const t = initTRPC.create({
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
+
 export const protectedProcedure = baseProcedure.use(async({ctx, next}) => {
     const session = await auth.api.getSession({
         headers: await headers(),
@@ -40,4 +41,21 @@ export const protectedProcedure = baseProcedure.use(async({ctx, next}) => {
     }
 
     return next({ ctx: {...ctx, auth: session}})
+})
+
+export const premiumProcedure = protectedProcedure.use(async({ctx, next}) => {
+   
+    const customer = await polarClient.customers.getStateExternal({
+        externalId: ctx?.auth?.user?.id,
+    })
+ 
+    if(!customer.activeSubscriptions || customer.activeSubscriptions.length === 0){
+        throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You need pro subscription to perform this action",
+            cause: { retry: false }
+        })
+    }
+  
+    return next({ctx: {...ctx, customer}})
 })
