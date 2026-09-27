@@ -1,7 +1,8 @@
 "use client"
 import { EntityContainer, EntityHeader, EntityPagination, EntitySearch } from "@/components/layout/entity-components";
 import { useCreateWorkflow, useSuspenseWorkflows } from "../hooks/use-workflows"
-import React from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import React, { Suspense } from "react";
 import { useUpgradeModal } from "@/hooks/use-upgrade";
 import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
@@ -64,7 +65,7 @@ export const WorkflowsSearch = () => {
 }
 
 
-export const WorkflowsPagination = () => {
+const WorkflowsPaginationInner = () => {
     const workflows = useSuspenseWorkflows()
     const [params, setParams] = useWorkflowsParams()
 
@@ -79,6 +80,16 @@ export const WorkflowsPagination = () => {
             onPageChange={handlePageChange}
             disabled={workflows.isFetching}
         />
+    )
+}
+
+export const WorkflowsPagination = () => {
+    return (
+        <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+                <WorkflowsPaginationInner />
+            </Suspense>
+        </ErrorBoundary>
     )
 }
 

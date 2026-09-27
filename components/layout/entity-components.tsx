@@ -114,7 +114,7 @@ export const EntityPagination = ({ page, totalPages, onPageChange, disabled }: E
                     variant="outline"
                     size="sm"
                     onClick={() => onPageChange(Math.max(page - 1, 1))}
-                    disabled={page === 1 || disabled}
+                    disabled={page === 1 || disabled || totalPages == 0}
                 >
                     Previous
                 </Button>
@@ -122,7 +122,7 @@ export const EntityPagination = ({ page, totalPages, onPageChange, disabled }: E
                     variant="outline"
                     size="sm"
                     onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-                    disabled={page === totalPages || disabled}
+                    disabled={page === totalPages || disabled || totalPages == 0}
                 >
                     Next
                 </Button>

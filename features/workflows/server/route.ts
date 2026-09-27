@@ -50,14 +50,26 @@ export const workflowsRouter = createTRPCRouter({
         })
     }),
 
-    getMany: protectedProcedure.
-    input(
+    getMany: protectedProcedure
+    .input(
         z.object({
-            page: z.number().optional().default(PAGINATION.DEFAULT_PAGE),
-            pageSize: z.number().min(PAGINATION.MIN_PAGE_SIZE).max(PAGINATION.MAX_PAGE_SIZE).default(PAGINATION.DEFAULT_PAGE_SIZE),
-            search: z.string().optional().default("")
+            page: z
+                .number()
+                .int()
+                .min(1)
+                .optional()
+                .default(PAGINATION.DEFAULT_PAGE),
+
+            pageSize: z
+                .number()
+                .int()
+                .min(PAGINATION.MIN_PAGE_SIZE)
+                .max(PAGINATION.MAX_PAGE_SIZE)
+                .default(PAGINATION.DEFAULT_PAGE_SIZE),
+
+            search: z.string().optional().default(""),
         })
-    ).
+    ).  
     query(async ({ctx, input}) => {
 
         const {page, pageSize, search} = input

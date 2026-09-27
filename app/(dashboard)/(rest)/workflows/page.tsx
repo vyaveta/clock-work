@@ -21,15 +21,15 @@ const WorkFlows = async ({ searchParams }: Props) => {
   prefetchWorkflows(params);
 
   return (
-    <WorkflowsContainer>
-      <HydrateClient>
+    <HydrateClient>
+      <WorkflowsContainer>
         <ErrorBoundary fallback={<h1>Something went wrong</h1>}>
           <Suspense fallback={<h1>Loading...</h1>}>
             <WorkflowsList />
           </Suspense>
         </ErrorBoundary>
-      </HydrateClient>
-    </WorkflowsContainer>
+      </WorkflowsContainer>
+    </HydrateClient>
   )
 }
 
