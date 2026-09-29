@@ -26,3 +26,20 @@ export const useCreateWorkflow = () => {
         }
     }))
 }
+
+
+export const useRemoveWorkflow = () => {
+    const queryclient = useQueryClient()
+    const trpc = useTRPC()
+
+    return useMutation(trpc.workflows.remove.mutationOptions({
+        onSuccess: (data) => {
+            toast.success(`Workflow ${data.name} removed`)
+            queryclient.invalidateQueries(trpc.workflows.getMany.queryOptions({}))
+            queryclient.invalidateQueries(trpc.workflows.getOne.queryFilter({id: data.id}))
+        },
+        onError: (error) => {
+            toast.error(`Failed to remove workflow ${error.message}`)
+        }
+    }))
+}
