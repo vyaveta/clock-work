@@ -1,0 +1,2 @@
+-- CreateEnum
+CREATE TYPE "NodeType" AS ENUM ('INITIAL', 'MANUAL_TRIGGER', 'HTTP_REQUEST');
