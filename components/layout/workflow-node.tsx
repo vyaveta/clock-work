@@ -40,6 +40,7 @@ export default function WorkflowNode({ children, onRemove, onSettings, showToolb
                     {description}
                 </p>
             )}
+            
         </NodeToolbar>
     </>
 }
