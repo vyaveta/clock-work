@@ -7,6 +7,7 @@ import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NuqsAdapter } from "nuqs/adapters/next/app"
+import { Provider } from "jotai";
 
 const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -31,8 +32,10 @@ export default function RootLayout({
           <NuqsAdapter>
             <ThemeProvider>
               <TooltipProvider>
-                {children}
-                <Toaster />
+                <Provider>
+                  {children}
+                  <Toaster />
+                </Provider>
               </TooltipProvider>
             </ThemeProvider>
           </NuqsAdapter>

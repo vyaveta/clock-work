@@ -4,16 +4,33 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { useSuspenseWorkflow, useUpdateWorkflowName } from "@/features/workflows/hooks/use-workflows"
+import { useSuspenseWorkflow, useUpdateWorkflow, useUpdateWorkflowName } from "@/features/workflows/hooks/use-workflows"
 import { cn } from "@/lib/utils"
+import { editorAtom } from "@/store/atoms"
+import { useAtomValue } from "jotai"
 import { SaveIcon } from "lucide-react"
 import Link from "next/link"
 import React, { useEffect, useRef, useState } from "react"
 
 export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
+
+    const editor = useAtomValue(editorAtom)
+    const saveWorkflow = useUpdateWorkflow()
+
+    const handleSave = () => {
+        if (!editor) {
+            return
+        }
+        saveWorkflow.mutate({
+            id: workflowId,
+            nodes: editor.getNodes(),
+            edges: editor.getEdges()
+        })
+    }
+
     return (
         <div className="ml-auto" >
-            <Button size={"sm"} onClick={() => { }} disabled={false} >
+            <Button size={"sm"} onClick={handleSave} disabled={saveWorkflow.isPending} >
                 <SaveIcon className="size-4" />
                 Save
             </Button>
