@@ -1,9 +1,10 @@
 "use client"
 
 import { BaseExecutionNode } from "@/features/executions/components/base-execution-node"
-import type { Node, NodeProps } from "@xyflow/react"
+import { useReactFlow, type Node, type NodeProps } from "@xyflow/react"
 import { GlobeIcon } from "lucide-react"
-import { memo } from "react"
+import { memo, useState } from "react"
+import { HttpRequestDialog, HttpRequestFormType } from "./dialog"
 
 
 type HttpRequestNodeData = {
@@ -15,27 +16,57 @@ type HttpRequestNodeData = {
 
 type HttpRequestNodeType = Node<HttpRequestNodeData>
 
-export const HttpRequestNode = memo((props: NodeProps) => {
+export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
 
-    const nodeData = props.data as HttpRequestNodeData
+    const nodeData = props.data
+
+    const { setNodes } = useReactFlow()
+
+    const [dialogOpen, setDialogOpen] = useState(false)
+
+    const handleDialogOpen = () => {
+        setDialogOpen(true)
+    }
+
+    const handleSubmit = (values: HttpRequestFormType) => {
+        setNodes((nodes) =>
+            nodes.map((node) => {
+                if (node.id === props.id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            endPoint: values.endPoint,
+                            method: values.method,
+                            body: values.body,
+                        },
+                    }
+                }
+                return node
+            })
+        )
+    }
 
     const description = nodeData.endPoint ?
         `${nodeData.method || "GET"}: ${nodeData.endPoint}` : "Not Configured"
 
     return (
         <>
+            <HttpRequestDialog open={dialogOpen} onOpenChange={setDialogOpen}
+                onSubmit={handleSubmit}
+                defaultEndpoint={nodeData.endPoint}
+                defaultMethod={nodeData.method}
+                defaultBody={nodeData.body}
+            />
             <BaseExecutionNode
                 {...props}
                 name="HTTP Request"
                 description={description}
                 Icon={GlobeIcon}
-                onSettings={() => {}}
-                onDoubleClick={() => {}}
+                onSettings={handleDialogOpen}
+                onDoubleClick={handleDialogOpen}
             />
-                {/* <div className="flex items-center gap-2">
-                    <span>{nodeData.method || "GET"}: {nodeData.endPoint}</span>
-                </div>
-            </BaseExecutionNode> */}
+
         </>
     )
 })
