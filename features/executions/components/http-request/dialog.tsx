@@ -25,36 +25,33 @@ import { useEffect } from "react"
 
 const httpRequestSchema = z.object({
   method: z.enum(["GET", "PUT", "PATCH", "POST", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"]),
-  endPoint: z.url({ message: "Please enter a valid URL" }),
+  endpoint: z.url({ message: "Please enter a valid URL" }),
   body: z.string().optional(),
 })
+
+export type HttpRequestFormType = z.infer<typeof httpRequestSchema>
 
 interface HttpRequestDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: z.infer<typeof httpRequestSchema>) => void
-  defaultEndpoint?: string
-  defaultMethod?: "GET" | "PUT" | "PATCH" | "POST" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE" | "CONNECT"
-  defaultBody?: string
+  onSubmit: (values: HttpRequestFormType) => void
+  defaultValues?: Partial<HttpRequestFormType>
 }
 
 
-export type HttpRequestFormType = z.infer<typeof httpRequestSchema>
 
 export const HttpRequestDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  defaultBody,
-  defaultEndpoint,
-  defaultMethod = "GET",
+  defaultValues,
 }: HttpRequestDialogProps) => {
-  const form = useForm<z.infer<typeof httpRequestSchema>>({
+  const form = useForm<HttpRequestFormType>({
     resolver: zodResolver(httpRequestSchema),
     defaultValues: {
-      endPoint: defaultEndpoint ?? "",
-      method: defaultMethod,
-      body: defaultBody ?? "",
+      endpoint: defaultValues?.endpoint ?? "",
+      method: defaultValues?.method ?? "GET",
+      body: defaultValues?.body ?? "",
     },
   })
 
@@ -70,12 +67,12 @@ export const HttpRequestDialog = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        endPoint: defaultEndpoint ?? "",
-        method: defaultMethod,
-        body: defaultBody ?? "",
+        endpoint: defaultValues?.endpoint ?? "",
+        method: defaultValues?.method ?? "GET",
+        body: defaultValues?.body ?? "",
       })
     }
-  }, [open, defaultBody, defaultEndpoint, defaultMethod])
+  }, [open, defaultValues])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,7 +121,7 @@ export const HttpRequestDialog = ({
 
             {/* Endpoint */}
             <Controller
-              name="endPoint"
+              name="endpoint"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
@@ -157,7 +154,7 @@ export const HttpRequestDialog = ({
                       {...field}
                       id="http-body"
                       placeholder='{"key": "value"}'
-                      className="min-h-[120px] font-mono text-sm"
+                      className="min-h-30 font-mono text-sm"
                       aria-invalid={fieldState.invalid}
                     />
                     <FieldDescription>
