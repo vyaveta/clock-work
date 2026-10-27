@@ -51,9 +51,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
         <>
             <HttpRequestDialog open={dialogOpen} onOpenChange={setDialogOpen}
                 onSubmit={handleSubmit}
-                defaultValues={{
-                    ...nodeData
-                }}
+                defaultValues={nodeData}
             />
             <BaseExecutionNode
                 {...props}

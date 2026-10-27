@@ -25,7 +25,8 @@ export const topologicalSort = (
 
     for(const node of nodes) {
         if(!connectedNodeIds.has(node.id)) {
-            edges.push([node.id,node.id])
+            // edges.push([node.id,node.id])
+            // lets ignore unconnected nodes
         }
     }
 
