@@ -30,7 +30,7 @@ export default function WorkflowNode({ children, onRemove, onSettings, showToolb
         <NodeToolbar
             position={Position.Bottom}
             isVisible
-            className="max-w-[200px] text-center"
+            className="max-w-50 text-center"
         >
             {name && (
                 <p className="text-sm font-medium">{name}</p>

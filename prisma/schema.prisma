@@ -129,8 +129,7 @@ model Connection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([fromNodeId, fromOutput])
-  @@unique([toNodeId, toInput])
+  @@unique([fromNodeId, toNodeId,fromOutput, toInput])
   @@map("connection")
   
 }

@@ -8,10 +8,9 @@ import { HttpRequestDialog, HttpRequestFormType } from "./dialog"
 
 
 type HttpRequestNodeData = {
-    endPoint?: string
+    endpoint?: string
     method?: "GET" | "PUT" | "PATCH" | "POST" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE" | "CONNECT"
     body?: string
-    [key: string]: unknown
 }
 
 type HttpRequestNodeType = Node<HttpRequestNodeData>
@@ -36,9 +35,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
                         ...node,
                         data: {
                             ...node.data,
-                            endPoint: values.endPoint,
-                            method: values.method,
-                            body: values.body,
+                            ...values
                         },
                     }
                 }
@@ -47,16 +44,14 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
         )
     }
 
-    const description = nodeData.endPoint ?
-        `${nodeData.method || "GET"}: ${nodeData.endPoint}` : "Not Configured"
+    const description = nodeData.endpoint ?
+        `${nodeData.method || "GET"}: ${nodeData.endpoint}` : "Not Configured"
 
     return (
         <>
             <HttpRequestDialog open={dialogOpen} onOpenChange={setDialogOpen}
                 onSubmit={handleSubmit}
-                defaultEndpoint={nodeData.endPoint}
-                defaultMethod={nodeData.method}
-                defaultBody={nodeData.body}
+                defaultValues={nodeData}
             />
             <BaseExecutionNode
                 {...props}
