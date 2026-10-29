@@ -4,9 +4,13 @@ import prisma from "@/lib/db";
 import { topologicalSort } from "./utils";
 import { NodeType } from "@/lib/generated/prisma/enums";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
+import { httpRequestChannel } from "./channels/http-request";
 
 export const executeWorkflow = inngest.createFunction(
-    {id: "execute-workflow", triggers: {event: "workflow/execute"}},
+    {
+        id: "execute-workflow", 
+        triggers: {event: "workflow/execute"},    
+},
     async ({event,step}) => {
        
         const workflowId = event.data.workflowId
@@ -39,7 +43,8 @@ export const executeWorkflow = inngest.createFunction(
                 data: node.data as Record<string, unknown>,
                 nodeId: node.id,
                 context,
-                step
+                step,
+                workflowId,
             })
         }
 

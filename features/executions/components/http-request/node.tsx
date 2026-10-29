@@ -8,6 +8,7 @@ import { HttpRequestDialog, HttpRequestFormType } from "./dialog"
 
 
 type HttpRequestNodeData = {
+    variableName?: string
     endpoint?: string
     method?: "GET" | "PUT" | "PATCH" | "POST" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE" | "CONNECT"
     body?: string

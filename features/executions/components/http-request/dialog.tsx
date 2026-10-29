@@ -27,6 +27,7 @@ const httpRequestSchema = z.object({
   method: z.enum(["GET", "PUT", "PATCH", "POST", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"]),
   endpoint: z.url({ message: "Please enter a valid URL" }),
   body: z.string().optional(),
+  variableName: z.string().min(1, { message: " Variable name is required" }).regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, { message: 'variable name must start with a letter or underscore and contains only letters, numbers and underscores.' })
 })
 
 export type HttpRequestFormType = z.infer<typeof httpRequestSchema>
@@ -49,6 +50,7 @@ export const HttpRequestDialog = ({
   const form = useForm<HttpRequestFormType>({
     resolver: zodResolver(httpRequestSchema),
     defaultValues: {
+      variableName: defaultValues?.variableName ?? "",
       endpoint: defaultValues?.endpoint ?? "",
       method: defaultValues?.method ?? "GET",
       body: defaultValues?.body ?? "",
@@ -56,6 +58,7 @@ export const HttpRequestDialog = ({
   })
 
   const watchMethod = form.watch("method")
+  const watchVariableName = form.watch("variableName") || "myApiCall"
   const showBodyField = ["POST", "PUT", "PATCH", "CONNECT"].includes(watchMethod)
 
   const handleSubmit = (values: z.infer<typeof httpRequestSchema>) => {
@@ -67,6 +70,7 @@ export const HttpRequestDialog = ({
   useEffect(() => {
     if (open) {
       form.reset({
+        variableName: defaultValues?.variableName ?? "",
         endpoint: defaultValues?.endpoint ?? "",
         method: defaultValues?.method ?? "GET",
         body: defaultValues?.body ?? "",
@@ -86,6 +90,30 @@ export const HttpRequestDialog = ({
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-4">
           <FieldGroup>
+
+            <Controller
+              name="variableName"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="http-variableName">Variable name</FieldLabel>
+                  <Input
+                    {...field}
+                    id="http-variableName"
+                    placeholder="myApiCall"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  <FieldDescription>
+                    The results of this node will be stored in a variable to use in other nodes
+                    {`{{${watchVariableName}.httpResponse.data}}`}
+                  </FieldDescription>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
             {/* Method */}
             <Controller
               name="method"
