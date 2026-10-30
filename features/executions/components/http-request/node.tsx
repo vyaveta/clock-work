@@ -3,8 +3,9 @@
 import { BaseExecutionNode } from "@/features/executions/components/base-execution-node"
 import { useReactFlow, type Node, type NodeProps } from "@xyflow/react"
 import { GlobeIcon } from "lucide-react"
-import { memo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { HttpRequestDialog, HttpRequestFormType } from "./dialog"
+import { getUpstreamVariables } from "@/lib/workflow-variables"
 
 
 type HttpRequestNodeData = {
@@ -20,7 +21,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
 
     const nodeData = props.data
 
-    const { setNodes } = useReactFlow()
+    const { setNodes, getNodes, getEdges } = useReactFlow()
 
     const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -45,6 +46,14 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
         )
     }
 
+    // Derive available variables from upstream nodes whenever the dialog opens.
+    const availableVariables = useMemo(
+        () => getUpstreamVariables(props.id, getNodes(), getEdges()),
+        // Re-compute when the dialog opens so the list reflects the latest graph state.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [dialogOpen, props.id],
+    )
+
     const description = nodeData.endpoint ?
         `${nodeData.method || "GET"}: ${nodeData.endpoint}` : "Not Configured"
 
@@ -53,6 +62,7 @@ export const HttpRequestNode = memo((props: NodeProps<HttpRequestNodeType>) => {
             <HttpRequestDialog open={dialogOpen} onOpenChange={setDialogOpen}
                 onSubmit={handleSubmit}
                 defaultValues={nodeData}
+                availableVariables={availableVariables}
             />
             <BaseExecutionNode
                 {...props}

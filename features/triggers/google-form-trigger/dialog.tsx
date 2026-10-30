@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CopyIcon } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { getSignedWebhookUrl } from "./actions"
 import { generateGoogleFormScript } from "./utils"
 
 interface GoogleFormTriggerDialogProps {
@@ -22,9 +24,15 @@ export const GoogleFormTriggerDialog = ({
     const params = useParams();
     const workflowId = params.workflow_id as string
 
-    //construct the webhook url
-    const baseURL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const webhookUrl = `${baseURL}/api/webhooks/google-form?workflowId=${workflowId}`
+    const [webhookUrl, setWebhookUrl] = useState<string>("")
+
+    // Fetch the signed URL from the server so the raw secret never reaches the client.
+    useEffect(() => {
+        if (!open || !workflowId) return;
+        getSignedWebhookUrl(workflowId).then(setWebhookUrl).catch(() => {
+            toast.error("Failed to generate webhook URL")
+        })
+    }, [open, workflowId])
 
     const copyWebHookUrlToClipboard = async () => {
         try {
