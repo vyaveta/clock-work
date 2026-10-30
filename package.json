@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "inngest:dev": "inngest-cli dev",
+    "ngrok:dev": "ngrok http 3000 --url https://interartistic-clement-superadorn.ngrok-free.dev",
     "dev:all": "mprocs",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",

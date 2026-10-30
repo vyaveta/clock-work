@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
         permanent: false,
       }
     ]
-  }
+  },
+  allowedDevOrigins:  ['interartistic-clement-superadorn.ngrok-free.dev'],
 }
 
 export default withSentryConfig(nextConfig, {

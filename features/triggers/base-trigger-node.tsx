@@ -21,7 +21,7 @@ interface BaseTriggerNodeProps extends NodeProps {
 }
 
 export const BaseTriggerNode = memo(
-    ({ id, data, Icon, name, description, children, targetPosition,status = "initial", sourcePosition, onSettings, onDoubleClick }: BaseTriggerNodeProps) => {
+    ({ id, data, Icon, name, description, children, targetPosition, status = "initial", sourcePosition, onSettings, onDoubleClick }: BaseTriggerNodeProps) => {
 
 
         const { setNodes, setEdges } = useReactFlow()
@@ -39,12 +39,12 @@ export const BaseTriggerNode = memo(
                 onRemove={handleRemove}
             >
                 <NodeStatusIndicator
-                status="initial"
-                variant="border"
-                className="rounded-l-2xl"
+                    status={status}
+                    variant="border"
+                    className="rounded-l-2xl"
                 >
                     <BaseNode
-                    status={status}
+                        status={status}
                         onDoubleClick={onDoubleClick}
                         className="rounded-l-2xl relative group"
                     >

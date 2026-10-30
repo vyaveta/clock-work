@@ -25,7 +25,7 @@ import { useEffect } from "react"
 
 const httpRequestSchema = z.object({
   method: z.enum(["GET", "PUT", "PATCH", "POST", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"]),
-  endpoint: z.url({ message: "Please enter a valid URL" }),
+  endpoint: z.string().min(1,{ message: "Please enter a valid URL" }),
   body: z.string().optional(),
   variableName: z.string().min(1, { message: " Variable name is required" }).regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, { message: 'variable name must start with a letter or underscore and contains only letters, numbers and underscores.' })
 })

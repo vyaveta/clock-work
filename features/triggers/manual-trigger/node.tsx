@@ -1,4 +1,4 @@
-import { BaseTriggerNode } from "@/features/triggers/components/base-trigger-node"
+import { BaseTriggerNode } from "@/features/triggers/base-trigger-node"
 import type { NodeProps } from "@xyflow/react"
 import { MousePointerIcon } from "lucide-react"
 import { memo } from "react"
