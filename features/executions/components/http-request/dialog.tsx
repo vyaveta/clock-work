@@ -22,12 +22,26 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import z from "zod"
 import { useEffect } from "react"
+import { isValidEndpoint } from "@/lib/url-utils"
+import type { VariableInfo } from "@/lib/workflow-variables"
 
 const httpRequestSchema = z.object({
   method: z.enum(["GET", "PUT", "PATCH", "POST", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"]),
-  endpoint: z.url({ message: "Please enter a valid URL" }),
+  endpoint: z
+    .string()
+    .min(1, { message: "Endpoint is required" })
+    .refine(isValidEndpoint, {
+      message:
+        "Must be a valid http(s) URL, or contain a {{template}} if the URL is resolved from a previous node's output",
+    }),
   body: z.string().optional(),
-  variableName: z.string().min(1, { message: " Variable name is required" }).regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, { message: 'variable name must start with a letter or underscore and contains only letters, numbers and underscores.' })
+  variableName: z
+    .string()
+    .min(1, { message: " Variable name is required" })
+    .regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, {
+      message:
+        "variable name must start with a letter or underscore and contains only letters, numbers and underscores.",
+    }),
 })
 
 export type HttpRequestFormType = z.infer<typeof httpRequestSchema>
@@ -37,6 +51,8 @@ interface HttpRequestDialogProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (values: HttpRequestFormType) => void
   defaultValues?: Partial<HttpRequestFormType>
+  /** Variables available from upstream nodes in the workflow graph */
+  availableVariables?: VariableInfo[]
 }
 
 
@@ -46,6 +62,7 @@ export const HttpRequestDialog = ({
   onOpenChange,
   onSubmit,
   defaultValues,
+  availableVariables = [],
 }: HttpRequestDialogProps) => {
   const form = useForm<HttpRequestFormType>({
     resolver: zodResolver(httpRequestSchema),
@@ -80,7 +97,7 @@ export const HttpRequestDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="min-w-2xl ">
         <DialogHeader>
           <DialogTitle>HTTP Request</DialogTitle>
           <DialogDescription>
@@ -161,7 +178,11 @@ export const HttpRequestDialog = ({
                     aria-invalid={fieldState.invalid}
                   />
                   <FieldDescription>
-                    Static URL or use {"{{variables}}"} for simple values or {"{{json variable}}"} to stringify objects.
+                    Enter a static URL, or use <code className="bg-muted px-1 rounded text-xs">{"{{variable}}"}</code> to
+                    insert values from previous nodes.
+                    {availableVariables.length > 0 && (
+                      <> Example: <code className="bg-muted px-1 rounded text-xs">{`https://api.example.com/users/{{${availableVariables[0].path}}}`}</code></>
+                    )}
                   </FieldDescription>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -186,7 +207,8 @@ export const HttpRequestDialog = ({
                       aria-invalid={fieldState.invalid}
                     />
                     <FieldDescription>
-                      Request body. Supports {"{{variables}}"} and {"{{json variable}}"}.
+                      JSON body. Use <code className="bg-muted px-1 rounded text-xs">{"{{variable}}"}</code> for string
+                      values or <code className="bg-muted px-1 rounded text-xs">{"{{json variable}}"}</code> to embed objects.
                     </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -194,6 +216,25 @@ export const HttpRequestDialog = ({
                   </Field>
                 )}
               />
+            )}
+
+            {/* Available variables from upstream nodes */}
+            {availableVariables.length > 0 && (
+              <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Variables from previous nodes
+                </p>
+                <ul className="space-y-1">
+                  {availableVariables.map((v) => (
+                    <li key={v.path} className="flex items-start gap-2 text-xs">
+                      <code className="bg-background border rounded px-1 py-0.5 font-mono shrink-0 select-all">
+                        {`{{${v.path}}}`}
+                      </code>
+                      <span className="text-muted-foreground">{v.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </FieldGroup>
 

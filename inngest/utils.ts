@@ -1,17 +1,18 @@
 import { Connection, Node } from "@/lib/generated/prisma/client";
 import toposort from "toposort";
+import { inngest } from "./client";
 
 export const topologicalSort = (
     nodes: Node[],
     connections: Connection[],
 ): Node[] => {
     // if no connections, return node as is (they are all independant)
-    if(connections.length === 0 )
+    if (connections.length === 0)
         return nodes
 
 
     //create edges array for toposort
-    const edges: [string, string] [] = connections.map((connection) => [
+    const edges: [string, string][] = connections.map((connection) => [
         connection.fromNodeId,
         connection.toNodeId,
     ])
@@ -23,8 +24,8 @@ export const topologicalSort = (
         connectedNodeIds.add(connection.toNodeId)
     }
 
-    for(const node of nodes) {
-        if(!connectedNodeIds.has(node.id)) {
+    for (const node of nodes) {
+        if (!connectedNodeIds.has(node.id)) {
             // edges.push([node.id,node.id])
             // lets ignore unconnected nodes
         }
@@ -33,23 +34,34 @@ export const topologicalSort = (
     //perform topological sort
     let sortedNodeIds: string[]
 
-    try{
+    try {
         sortedNodeIds = toposort(edges)
         //remove duplicated (from self edges)
         sortedNodeIds = [...new Set(sortedNodeIds)]
     }
     catch (error) {
-        if(error instanceof Error && error.message.includes("Cyclic")){
+        if (error instanceof Error && error.message.includes("Cyclic")) {
             throw new Error("Workflow contains a cycle")
         }
         throw error
     }
 
     //map sorted ids back to node object
-    const nodeMap =  new Map(nodes.map((node) => [node.id,node]))
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]))
 
     //filter out nodes not in the map (safety)
     return sortedNodeIds
-    .map((id) => nodeMap.get(id)!).filter(Boolean)
-   
+        .map((id) => nodeMap.get(id)!).filter(Boolean)
+
+}
+
+
+export const sendWorkflowExecution = async (data: {
+    workflowId: string;
+    [key: string]: any;
+}) => {
+    return inngest.send({
+        name: "workflow/execute",
+        data
+    })
 }

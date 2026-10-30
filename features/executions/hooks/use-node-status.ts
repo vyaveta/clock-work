@@ -4,19 +4,26 @@ import { useEffect, useState } from "react";
 import { useRealtime } from "inngest/react";
 import { NodeStatus } from "@/components/react-flow/node-status-indicator";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
+import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger";
+
+type SupportedChannel =
+  | ReturnType<typeof httpRequestChannel>
+  | ReturnType<typeof googleFormTriggerChannel>;
 
 interface UseNodeStatusOptions {
   nodeId: string;
   refreshToken: () => Promise<any>; // subscription token from your server
+  channel?: SupportedChannel;
 }
 
 export function useNodeStatus({
   nodeId,
   refreshToken,
+  channel: channelProp,
 }: UseNodeStatusOptions) {
   const [status, setStatus] = useState<NodeStatus>("initial");
 
-  const channel = httpRequestChannel({name: "http-request-execution"});
+  const channel = channelProp ?? httpRequestChannel({ name: "http-request-execution" });
 
   const { messages, connectionStatus } = useRealtime({
     channel,
@@ -38,7 +45,7 @@ export function useNodeStatus({
     if (!relevant) return;
 
     //@ts-ignore
-    const next = relevant?.data?.status! as "loading" | "success" | "error" 
+    const next = relevant?.data?.status! as "loading" | "success" | "error";
 
     // Map channel status → your NodeStatus type
     if (next === "loading") setStatus("loading");
@@ -58,7 +65,7 @@ export function useNodeStatus({
             m.topic === "status" &&
             m.data?.nodeId === nodeId &&
             m.data?.status === "error"
-        )//@ts-ignore
+        ) //@ts-ignore
         .at(-1)?.data?.error ?? null,
   };
 }
