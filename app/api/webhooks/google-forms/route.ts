@@ -1,5 +1,5 @@
 import { sendWorkflowExecution } from "@/inngest/utils";
-import { verifyWebhookSignature } from "@/lib/webhook-sig";
+import { verifyWebhookSignature } from "@/lib/webhooks/signature";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {

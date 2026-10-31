@@ -29,7 +29,53 @@ export const executeWorkflow = inngest.createFunction(
                 }
             })
 
-            return topologicalSort(workflow.nodes, workflow.connections)
+            const initialData = event.data.initialData as Record<string, unknown> | undefined
+            const inferredTriggerType = initialData?.stripe
+                ? NodeType.STRIPE_TRIGGER
+                : initialData?.googleForm
+                    ? NodeType.GOOGLE_FORM_TRIGGER
+                    : undefined
+            const triggerNodeId = event.data.triggerNodeId ?? workflow.nodes.find((node) =>
+                inferredTriggerType ? node.type === inferredTriggerType : node.type === NodeType.MANUAL_TRIGGER,
+            )?.id
+            if (!triggerNodeId) {
+                throw new NonRetriableError("No matching workflow trigger was found")
+            }
+
+            const triggerNode = workflow.nodes.find((node) => node.id === triggerNodeId)
+            if (!triggerNode) {
+                throw new NonRetriableError(`Trigger node "${triggerNodeId}" was not found`)
+            }
+            if (![
+                NodeType.MANUAL_TRIGGER,
+                NodeType.INITIAL,
+                NodeType.GOOGLE_FORM_TRIGGER,
+                NodeType.STRIPE_TRIGGER,
+                //@ts-ignore
+            ].includes(triggerNode.type as NodeType)) {
+                throw new NonRetriableError(`Node "${triggerNodeId}" is not a trigger`)
+            }
+
+            // Only run this trigger and nodes downstream of it. Other triggers
+            // are independent entry points and must not execute for this event.
+            const reachableNodeIds = new Set([triggerNodeId])
+            const pendingNodeIds = [triggerNodeId]
+            while (pendingNodeIds.length > 0) {
+                const currentNodeId = pendingNodeIds.pop()!
+                for (const connection of workflow.connections) {
+                    if (connection.fromNodeId === currentNodeId && !reachableNodeIds.has(connection.toNodeId)) {
+                        reachableNodeIds.add(connection.toNodeId)
+                        pendingNodeIds.push(connection.toNodeId)
+                    }
+                }
+            }
+
+            const reachableNodes = workflow.nodes.filter((node) => reachableNodeIds.has(node.id))
+            const reachableConnections = workflow.connections.filter((connection) =>
+                reachableNodeIds.has(connection.fromNodeId) && reachableNodeIds.has(connection.toNodeId),
+            )
+
+            return topologicalSort(reachableNodes, reachableConnections)
 
         })
 
