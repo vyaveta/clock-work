@@ -29,16 +29,13 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
 }) => {
     const channel = httpRequestChannel({ name: 'http-request-execution' });
 
-
-
     try {
-        const result = await step.run("http-request", async () => {
+        await step.realtime.publish(`status-loading-${nodeId}`, channel.status, {
+            nodeId,
+            status: "loading",
+        });
 
-
-            await step.realtime.publish(`status-loading-${nodeId}`, channel.status, {
-                nodeId,
-                status: "loading",
-            });
+        const result = await step.run(`http-request-${nodeId}`, async () => {
 
             if (!data.endpoint) {
                 await step.realtime.publish(`status-error-${nodeId}`, channel.status, {

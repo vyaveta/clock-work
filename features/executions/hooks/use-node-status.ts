@@ -5,10 +5,12 @@ import { useRealtime } from "inngest/react";
 import { NodeStatus } from "@/components/react-flow/node-status-indicator";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger";
+import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
 
 type SupportedChannel =
   | ReturnType<typeof httpRequestChannel>
-  | ReturnType<typeof googleFormTriggerChannel>;
+  | ReturnType<typeof googleFormTriggerChannel>
+  | ReturnType<typeof manualTriggerChannel>;
 
 interface UseNodeStatusOptions {
   nodeId: string;

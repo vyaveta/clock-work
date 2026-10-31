@@ -33,8 +33,8 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
     const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)), []);
     const onConnect = useCallback((params: Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)), []);
 
-    const hasManualTrigger = useMemo(() => {
-        return nodes.some((node) => node.type === NodeType.MANUAL_TRIGGER)
+    const manualTrigger = useMemo(() => {
+        return nodes.find((node) => node.type === NodeType.MANUAL_TRIGGER)
     }, [nodes])
 
     return (
@@ -61,9 +61,9 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
                     <AddNodeButton />
                 </Panel>
                 {
-                    hasManualTrigger && (
+                    manualTrigger && (
                         <Panel position="bottom-center" className=''>
-                            <ExecuteWorkflowButton workflow_id={workflowId} />
+                            <ExecuteWorkflowButton workflow_id={workflowId} trigger_node_id={manualTrigger.id} />
                         </Panel>
                     )
                 }

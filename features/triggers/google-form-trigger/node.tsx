@@ -9,14 +9,14 @@ import { useNodeStatus } from "@/features/executions/hooks/use-node-status"
 import { getGoogleFormRealtimeToken } from "./actions"
 import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger"
 
+const channel = googleFormTriggerChannel({ name: "google-form-trigger-execution" })
+
 export const GoogleFormTriggerNode = memo((props: NodeProps) => {
     const [open, setOpen] = useState(false)
 
     const handleOpenSettings = () => {
         setOpen(true)
     }
-
-    const channel = googleFormTriggerChannel({ name: "google-form-trigger-execution" })
 
     const { status: nodeStatus, error } = useNodeStatus({
         nodeId: props.id,
