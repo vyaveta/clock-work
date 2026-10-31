@@ -136,3 +136,12 @@ model Connection {
   @@map("connection")
   
 }
+
+model SchedulerOccurrence {
+  nodeId      String
+  scheduledAt BigInt
+  createdAt   DateTime @default(now())
+
+  @@unique([nodeId, scheduledAt])
+  @@map("scheduler_occurrence")
+}

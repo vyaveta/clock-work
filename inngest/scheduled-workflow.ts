@@ -15,7 +15,10 @@ export const executeScheduledWorkflow = inngest.createFunction(
     },
     async ({ event, step }) => {
         const { workflowId, nodeId, configFingerprint, scheduledAt } = event.data;
-        if (!workflowId || !nodeId || !configFingerprint || !scheduledAt) {
+        if (
+            !workflowId || !nodeId || !configFingerprint ||
+            !Number.isSafeInteger(scheduledAt) || scheduledAt <= 0
+        ) {
             throw new NonRetriableError("workflowId, nodeId, configFingerprint, and scheduledAt are required");
         }
 
@@ -34,6 +37,30 @@ export const executeScheduledWorkflow = inngest.createFunction(
         });
 
         if (!current) return { ignored: true, reason: "Schedule was removed or changed" };
+
+        const claimed = await step.run("claim-scheduled-occurrence", async () => {
+            try {
+                await prisma.schedulerOccurrence.create({
+                    data: {
+                        nodeId,
+                        scheduledAt: BigInt(scheduledAt),
+                    },
+                });
+                return true;
+            } catch (error) {
+                if (
+                    typeof error === "object" &&
+                    error !== null &&
+                    "code" in error &&
+                    error.code === "P2002"
+                ) {
+                    return false;
+                }
+                throw error;
+            }
+        });
+
+        if (!claimed) return { ignored: true, reason: "Occurrence already claimed" };
 
         await step.sendEvent("dispatch-workflow", {
             name: "workflow/execute",

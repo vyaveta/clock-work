@@ -114,10 +114,14 @@ export const normalizeSchedulerConfig = (value: unknown): SchedulerConfig | null
         parsedDate.getUTCDate() !== day
     ) return null;
     if (!config.timezone || typeof config.timezone !== "string") return null;
-    if (!config.times?.length || config.times.some((time) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))) return null;
+
+    if (!Array.isArray(config.times) || config.times.length === 0) return null;
+    if (config.times.some((time) => typeof time !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))) return null;
+
     if (!["once", "daily", "weekly"].includes(config.repeat ?? "")) return null;
 
     const daysOfWeek = config.daysOfWeek ?? [];
+    if (!Array.isArray(daysOfWeek)) return null;
     if (daysOfWeek.some((day) => !Number.isInteger(day) || day < 0 || day > 6)) return null;
     if (config.repeat === "weekly" && daysOfWeek.length === 0) return null;
 
