@@ -5,15 +5,19 @@ import { useRealtime } from "inngest/react";
 import { NodeStatus } from "@/components/react-flow/node-status-indicator";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger";
+import { jobScraperChannel } from "@/inngest/channels/job-scraper";
+import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
 
-type SupportedChannel =
+export type SupportedNodeStatusChannel =
   | ReturnType<typeof httpRequestChannel>
-  | ReturnType<typeof googleFormTriggerChannel>;
+  | ReturnType<typeof googleFormTriggerChannel>
+  | ReturnType<typeof manualTriggerChannel>
+  | ReturnType<typeof jobScraperChannel>;
 
 interface UseNodeStatusOptions {
   nodeId: string;
   refreshToken: () => Promise<any>; // subscription token from your server
-  channel?: SupportedChannel;
+  channel?: SupportedNodeStatusChannel;
 }
 
 export function useNodeStatus({

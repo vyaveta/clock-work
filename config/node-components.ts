@@ -3,6 +3,7 @@ import { HttpRequestNode } from "@/features/executions/components/http-request/n
 import { GoogleFormTriggerNode } from "@/features/triggers/google-form-trigger/node";
 import { ManualTriggerNode } from "@/features/triggers/manual-trigger/node";
 import { StripeTriggerNode } from "@/features/triggers/stripe-trigger/node";
+import { JobScraperNode } from "@/features/executions/components/job-scraper/node";
 import { NodeType } from "@/lib/generated/prisma/enums";
 import { NodeTypes } from "@xyflow/react";
 
@@ -12,6 +13,7 @@ export const nodeComponents = {
     [NodeType.HTTP_REQUEST]: HttpRequestNode,
     [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTriggerNode,
     [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
+    [NodeType.JOB_SCRAPER]: JobScraperNode,
 } as const satisfies NodeTypes
 
 export type RegisterNodeType = keyof typeof nodeComponents

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "NodeType" ADD VALUE 'JOB_SCRAPER';

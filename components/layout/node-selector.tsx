@@ -3,7 +3,7 @@
 import { createId } from "@paralleldrive/cuid2"
 import { useReactFlow } from "@xyflow/react"
 import { NodeType } from "@/lib/generated/prisma/enums"
-import { AlignHorizontalSpaceBetweenIcon, GlobeIcon, MousePointerIcon } from "lucide-react"
+import { AlignHorizontalSpaceBetweenIcon, BriefcaseBusinessIcon, GlobeIcon, MousePointerIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet"
 import { useCallback } from "react"
 import { toast } from "sonner"
@@ -39,6 +39,12 @@ const triggerNodes: NodeTypeOptions[] = [
 ]
 
 const executionNodes: NodeTypeOptions[] = [
+    {
+        type: NodeType.JOB_SCRAPER,
+        label: "Job Scraper & Matcher",
+        description: "Finds India jobs that match a resume",
+        icon: BriefcaseBusinessIcon,
+    },
     {
         type: NodeType.HTTP_REQUEST,
         label: "HTTP Request",

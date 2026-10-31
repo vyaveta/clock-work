@@ -10,6 +10,7 @@ import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node"
 import { NodeStatus, NodeStatusIndicator } from "@/components/react-flow/node-status-indicator"
 import { useNodeStatus } from "../hooks/use-node-status"
 import { getNodeRealtimeToken } from "./http-request/actions"
+import type { SupportedNodeStatusChannel } from "../hooks/use-node-status"
 
 interface BaseExecutionNodeProps extends NodeProps {
     name: string
@@ -17,13 +18,15 @@ interface BaseExecutionNodeProps extends NodeProps {
     children?: ReactNode
     description?: string
     status?: NodeStatus
+    statusChannel?: SupportedNodeStatusChannel
+    getStatusToken?: (nodeId: string) => Promise<any>
     onSettings?: () => void
     onDoubleClick?: () => void
 
 }
 
 export const BaseExecutionNode = memo(
-    ({ id, data, Icon, name, description, children, status = "initial", targetPosition, sourcePosition, onSettings, onDoubleClick }: BaseExecutionNodeProps) => {
+    ({ id, data, Icon, name, description, children, status: statusOverride, statusChannel, getStatusToken, targetPosition, sourcePosition, onSettings, onDoubleClick }: BaseExecutionNodeProps) => {
 
 
         const { setNodes, setEdges } = useReactFlow()
@@ -33,10 +36,12 @@ export const BaseExecutionNode = memo(
             setEdges((edges) => edges.filter((edge) => edge.source !== id && edge.target !== id))
         }
 
-        const { status: nodeStatus, error } = useNodeStatus({
+        const { status: realtimeStatus, error } = useNodeStatus({
             nodeId: id,
-            refreshToken: () => getNodeRealtimeToken(id), // your server action
+            refreshToken: () => getStatusToken ? getStatusToken(id) : getNodeRealtimeToken(id),
+            channel: statusChannel,
         });
+        const nodeStatus = statusOverride ?? realtimeStatus;
 
         return (
             <WorkflowNode

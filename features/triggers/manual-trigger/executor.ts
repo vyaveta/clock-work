@@ -1,19 +1,35 @@
-import { NodeType } from "@/lib/generated/prisma/enums";
 import type { NodeExecutor } from "@/features/executions/types";
+import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
 
 type ManualTriggerData = Record<string, unknown>
 
 export const manualTriggerExecutor: NodeExecutor<ManualTriggerData> = async ({
-    data,
     nodeId,
     context,
     step
 }) => {
-    
+    const channel = manualTriggerChannel({ name: "manual-trigger-execution" });
 
-    const result = await step.run("manual-trigger", async () => context)
+    try {
+        await step.realtime.publish(`status-loading-${nodeId}`, channel.status, {
+            nodeId,
+            status: "loading",
+        });
 
-    //todo: publish success state for manual trigger
+        const result = await step.run(`manual-trigger-${nodeId}`, async () => context);
 
-    return result
+        await step.realtime.publish(`status-success-${nodeId}`, channel.status, {
+            nodeId,
+            status: "success",
+        });
+
+        return result;
+    } catch (error) {
+        await step.realtime.publish(`status-error-${nodeId}`, channel.status, {
+            nodeId,
+            status: "error",
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+        throw error;
+    }
 }

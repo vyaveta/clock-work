@@ -4,6 +4,9 @@ import { MousePointerIcon } from "lucide-react"
 import { memo } from "react"
 import { ManualTriggerDialog } from "./dialog"
 import { useState } from "react"
+import { useNodeStatus } from "@/features/executions/hooks/use-node-status"
+import { getManualTriggerRealtimeToken } from "./actions"
+import { manualTriggerChannel } from "@/inngest/channels/manual-trigger"
 
 export const ManualTriggerNode = memo((props: NodeProps) => {
     const [open, setOpen] = useState(false)
@@ -12,7 +15,12 @@ export const ManualTriggerNode = memo((props: NodeProps) => {
         setOpen(true)
     }
 
-    const nodeStatus = "initial"
+    const channel = manualTriggerChannel({ name: "manual-trigger-execution" })
+    const { status: nodeStatus } = useNodeStatus({
+        nodeId: props.id,
+        refreshToken: () => getManualTriggerRealtimeToken(props.id),
+        channel,
+    })
 
 
     return (

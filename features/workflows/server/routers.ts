@@ -209,7 +209,11 @@ export const workflowsRouter = createTRPCRouter({
 
 
     execute: premiumProcedure.
-        input(z.object({ id: z.string() })).
+        input(z.object({
+            id: z.string(),
+            triggerNodeId: z.string(),
+            initialData: z.record(z.string(), z.unknown()).optional(),
+        })).
         mutation(async ({ ctx, input }) => {
            const workflow = await prisma.workFlow.findUniqueOrThrow({
             where: {
@@ -220,7 +224,11 @@ export const workflowsRouter = createTRPCRouter({
 
            await inngest.send({
             name: "workflow/execute",
-            data: {workflowId: input.id}
+            data: {
+                workflowId: input.id,
+                triggerNodeId: input.triggerNodeId,
+                ...(input.initialData ? { initialData: input.initialData } : {}),
+            }
            })
 
            return workflow
