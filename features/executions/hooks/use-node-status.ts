@@ -6,11 +6,13 @@ import { NodeStatus } from "@/components/react-flow/node-status-indicator";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger";
 import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
+import { schedulerTriggerChannel } from "@/inngest/channels/scheduler-trigger";
 
 type SupportedChannel =
   | ReturnType<typeof httpRequestChannel>
   | ReturnType<typeof googleFormTriggerChannel>
-  | ReturnType<typeof manualTriggerChannel>;
+  | ReturnType<typeof manualTriggerChannel>
+  | ReturnType<typeof schedulerTriggerChannel>;
 
 interface UseNodeStatusOptions {
   nodeId: string;

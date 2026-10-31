@@ -93,6 +93,7 @@ enum NodeType {
   HTTP_REQUEST
   GOOGLE_FORM_TRIGGER
   STRIPE_TRIGGER
+  SCHEDULE_TRIGGER
 }
 
 model Node {
@@ -134,4 +135,13 @@ model Connection {
   @@unique([fromNodeId, toNodeId,fromOutput, toInput])
   @@map("connection")
   
+}
+
+model SchedulerOccurrence {
+  nodeId      String
+  scheduledAt BigInt
+  createdAt   DateTime @default(now())
+
+  @@unique([nodeId, scheduledAt])
+  @@map("scheduler_occurrence")
 }

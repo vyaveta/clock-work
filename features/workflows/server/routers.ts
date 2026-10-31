@@ -7,6 +7,7 @@ import { PAGINATION } from "@/config/constants";
 import { NodeType } from "@/lib/generated/prisma/enums";
 import { Edge, Node, Position } from "@xyflow/react";
 import { inngest } from "@/inngest/client";
+import { queueNextSchedulerOccurrence } from "@/inngest/scheduling";
 
 export const workflowsRouter = createTRPCRouter({
     create: premiumProcedure.mutation(({ ctx }) => {
@@ -76,7 +77,7 @@ export const workflowsRouter = createTRPCRouter({
             })
             // transaction to ensure consistency
 
-            return await prisma.$transaction(async (tx) => {
+            const savedWorkflow = await prisma.$transaction(async (tx) => {
                 // delete all existing nodes and cascade deletes connections
                 await tx.node.deleteMany({
                     where: {
@@ -114,6 +115,15 @@ export const workflowsRouter = createTRPCRouter({
                 })
                 return workflow
             })
+
+            const schedulerNodes = nodes.filter((node) => node.type === NodeType.SCHEDULE_TRIGGER)
+            await Promise.all(schedulerNodes.map((node) => queueNextSchedulerOccurrence({
+                workflowId: id,
+                nodeId: node.id,
+                schedule: node.data?.schedule,
+            })))
+
+            return savedWorkflow
         }),
 
     getOne: protectedProcedure.
