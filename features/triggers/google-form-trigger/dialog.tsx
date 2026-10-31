@@ -8,8 +8,8 @@ import { CopyIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { getSignedWebhookUrl } from "./actions"
 import { generateGoogleFormScript } from "./utils"
+import { getSignedWebhookUrl } from "@/lib/webhooks/action"
 
 interface GoogleFormTriggerDialogProps {
     open: boolean,
@@ -29,7 +29,7 @@ export const GoogleFormTriggerDialog = ({
     // Fetch the signed URL from the server so the raw secret never reaches the client.
     useEffect(() => {
         if (!open || !workflowId) return;
-        getSignedWebhookUrl(workflowId).then(setWebhookUrl).catch(() => {
+        getSignedWebhookUrl({workflowId, feature: "google-forms"}).then(setWebhookUrl).catch(() => {
             toast.error("Failed to generate webhook URL")
         })
     }, [open, workflowId])
