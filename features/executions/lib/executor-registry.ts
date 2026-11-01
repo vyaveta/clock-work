@@ -4,13 +4,15 @@ import { manualTriggerExecutor } from "@/features/triggers/manual-trigger/execut
 import { httpRequestExecutor } from "../components/http-request/executor";
 import { googleFormTriggerExecutor } from "@/features/triggers/google-form-trigger/executor";
 import { stripeTriggerExecutor } from "@/features/triggers/stripe-trigger/executor";
+import { schedulerTriggerExecutor } from "@/features/triggers/scheduler-trigger/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
     [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
     [NodeType.INITIAL]: manualTriggerExecutor,
     [NodeType.HTTP_REQUEST]: httpRequestExecutor,
     [NodeType.GOOGLE_FORM_TRIGGER]: googleFormTriggerExecutor,
-    [NodeType.STRIPE_TRIGGER]: stripeTriggerExecutor
+    [NodeType.STRIPE_TRIGGER]: stripeTriggerExecutor,
+    [NodeType.SCHEDULE_TRIGGER]: schedulerTriggerExecutor,
 }
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

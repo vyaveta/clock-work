@@ -51,6 +51,7 @@ export const executeWorkflow = inngest.createFunction(
                 NodeType.INITIAL,
                 NodeType.GOOGLE_FORM_TRIGGER,
                 NodeType.STRIPE_TRIGGER,
+                NodeType.SCHEDULE_TRIGGER,
                 //@ts-ignore
             ].includes(triggerNode.type as NodeType)) {
                 throw new NonRetriableError(`Node "${triggerNodeId}" is not a trigger`)
