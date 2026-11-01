@@ -3,26 +3,23 @@ import { EmptyView, EntityContainer, EntityHeader, EntityItem, EntityList, Entit
 import { useCreateWorkflow, useRemoveWorkflow, useSuspenseWorkflows } from "../hooks/use-workflows"
 import { ErrorBoundary } from "react-error-boundary";
 import React, { Suspense } from "react";
-import { useUpgradeModal } from "@/hooks/use-upgrade";
 import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
 import { useEntitySearch } from "@/hooks/use-entity-search";
 import { WorkFlow } from "@/lib/generated/prisma/client"
 import { WorkflowIcon } from "lucide-react";
 import {formatDistanceToNow} from "date-fns"
+import { connectMongoose } from "@/lib/mongoose";
+import { toast } from "sonner";
 
 
 export const WorkflowsEmpty = () => {
 
     const createWorkflow = useCreateWorkflow()
     const router = useRouter()
-    const { handleError, modal } = useUpgradeModal()
 
     const handleCreate = React.useCallback(() => {
         createWorkflow.mutate(undefined, {
-            onError: (error) => {
-                handleError(error)
-            },
             onSuccess: (data) => {
                 router.push(`workflows/${data.id}`)
             }
@@ -31,7 +28,6 @@ export const WorkflowsEmpty = () => {
 
     return (
         <>
-            {modal}
             <EmptyView
                 onNew={handleCreate}
                 newButtonLabel="Create Workflow"
@@ -89,13 +85,9 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
 
     const createWorkfow = useCreateWorkflow()
     const router = useRouter()
-    const { handleError, modal } = useUpgradeModal()
 
     const handleCreate = React.useCallback(() => {
         createWorkfow.mutate(undefined, {
-            onError: (error) => {
-                handleError(error)
-            },
             onSuccess: (data) => {
                 router.push(`workflows/${data.id}`)
             }
@@ -104,7 +96,6 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
 
     return (
         <>
-            {modal}
             <EntityHeader title="Workflows" description="Create and manage your workflows"
                 onNew={() => { handleCreate() }}
                 disabled={disabled}

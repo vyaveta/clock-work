@@ -3,7 +3,7 @@ import { realtime, staticSchema } from "inngest";
 
 export const httpRequestChannel = realtime.channel({
   name: ({ name }: { name: string }) =>
-    `http-request-execution`,
+    `http-request-execution:${name}`,
   topics: {
     status: {
       schema: staticSchema<{

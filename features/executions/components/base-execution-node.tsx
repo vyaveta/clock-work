@@ -3,7 +3,7 @@
 import { Position, useReactFlow, type NodeProps } from "@xyflow/react"
 import { type LucideIcon } from "lucide-react"
 import Image from "next/image"
-import { memo, type ReactNode } from "react"
+import { memo, useEffect, useRef, type ReactNode } from "react"
 import WorkflowNode from "@/components/layout/workflow-node"
 import { BaseHandle } from "@/components/react-flow/base-handle"
 import { BaseNode, BaseNodeContent } from "@/components/react-flow/base-node"
@@ -19,11 +19,12 @@ interface BaseExecutionNodeProps extends NodeProps {
     status?: NodeStatus
     onSettings?: () => void
     onDoubleClick?: () => void
+    onExecutionError?: (message: string) => void
 
 }
 
 export const BaseExecutionNode = memo(
-    ({ id, data, Icon, name, description, children, status = "initial", targetPosition, sourcePosition, onSettings, onDoubleClick }: BaseExecutionNodeProps) => {
+    ({ id, data, Icon, name, description, children, status = "initial", targetPosition, sourcePosition, onSettings, onDoubleClick, onExecutionError }: BaseExecutionNodeProps) => {
 
 
         const { setNodes, setEdges } = useReactFlow()
@@ -37,6 +38,18 @@ export const BaseExecutionNode = memo(
             nodeId: id,
             refreshToken: () => getNodeRealtimeToken(id), // your server action
         });
+
+        const lastNotifiedError = useRef<string | null>(null)
+        useEffect(() => {
+            if (nodeStatus !== "error") {
+                lastNotifiedError.current = null
+                return
+            }
+            if (error && error !== lastNotifiedError.current) {
+                lastNotifiedError.current = error
+                onExecutionError?.(error)
+            }
+        }, [error, nodeStatus, onExecutionError])
 
         return (
             <WorkflowNode

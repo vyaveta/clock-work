@@ -94,6 +94,17 @@ enum NodeType {
   GOOGLE_FORM_TRIGGER
   STRIPE_TRIGGER
   SCHEDULE_TRIGGER
+  JOB_SCRAPER
+  HR_EMAIL_FINDER
+}
+
+model SchedulerOccurrence {
+  nodeId      String
+  scheduledAt BigInt
+  createdAt   DateTime @default(now())
+
+  @@unique([nodeId, scheduledAt])
+  @@map("scheduler_occurrence")
 }
 
 model Node {
@@ -135,13 +146,4 @@ model Connection {
   @@unique([fromNodeId, toNodeId,fromOutput, toInput])
   @@map("connection")
   
-}
-
-model SchedulerOccurrence {
-  nodeId      String
-  scheduledAt BigInt
-  createdAt   DateTime @default(now())
-
-  @@unique([nodeId, scheduledAt])
-  @@map("scheduler_occurrence")
 }

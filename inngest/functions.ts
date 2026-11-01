@@ -8,11 +8,11 @@ import { httpRequestChannel } from "./channels/http-request";
 
 export const executeWorkflow = inngest.createFunction(
     {
-        id: "execute-workflow", 
-        triggers: {event: "workflow/execute"},    
+        id: "execute-workflow",
+        triggers: {event: "workflow/execute"},
 },
     async ({event,step}) => {
-       
+
         const workflowId = event.data.workflowId
 
         if(!workflowId) throw new NonRetriableError("workflowId is required")
@@ -78,6 +78,11 @@ export const executeWorkflow = inngest.createFunction(
 
             return topologicalSort(reachableNodes, reachableConnections)
 
+        })
+
+        console.info("Workflow execution plan", {
+            workflowId,
+            nodes: sortedNodes.map((node) => ({ id: node.id, type: node.type })),
         })
 
         //initialize context with any initial data from the trigger

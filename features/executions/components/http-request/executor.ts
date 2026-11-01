@@ -27,7 +27,7 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
     context,
     step
 }) => {
-    const channel = httpRequestChannel({ name: 'http-request-execution' });
+    const channel = httpRequestChannel({ name: nodeId });
 
     try {
         await step.realtime.publish(`status-loading-${nodeId}`, channel.status, {

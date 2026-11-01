@@ -1,7 +1,7 @@
 import { generateSlug } from "random-word-slugs"
 
 import prisma from "@/lib/db";
-import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
 import { NodeType } from "@/lib/generated/prisma/enums";
@@ -10,7 +10,7 @@ import { inngest } from "@/inngest/client";
 import { queueNextSchedulerOccurrence } from "@/inngest/scheduling";
 
 export const workflowsRouter = createTRPCRouter({
-    create: premiumProcedure.mutation(({ ctx }) => {
+    create: protectedProcedure.mutation(({ ctx }) => {
         return prisma.workFlow.create({
             data: {
                 name: generateSlug(3),
@@ -37,7 +37,7 @@ export const workflowsRouter = createTRPCRouter({
             })
         }),
 
-    updateName: premiumProcedure.input(z.object({ id: z.string(), name: z.string() })).
+    updateName: protectedProcedure.input(z.object({ id: z.string(), name: z.string() })).
         mutation(({ ctx, input }) => {
             return prisma.workFlow.update({
                 where: {
@@ -49,7 +49,7 @@ export const workflowsRouter = createTRPCRouter({
                 }
             })
         }),
-    update: premiumProcedure.input(z.object({
+    update: protectedProcedure.input(z.object({
         id: z.string(),
         nodes: z.array(
             z.object({
@@ -116,12 +116,13 @@ export const workflowsRouter = createTRPCRouter({
                 return workflow
             })
 
-            const schedulerNodes = nodes.filter((node) => node.type === NodeType.SCHEDULE_TRIGGER)
-            await Promise.all(schedulerNodes.map((node) => queueNextSchedulerOccurrence({
-                workflowId: id,
-                nodeId: node.id,
-                schedule: node.data?.schedule,
-            })))
+            await Promise.all(nodes
+                .filter((node) => node.type === NodeType.SCHEDULE_TRIGGER)
+                .map((node) => queueNextSchedulerOccurrence({
+                    workflowId: id,
+                    nodeId: node.id,
+                    schedule: node.data?.schedule,
+                })))
 
             return savedWorkflow
         }),
@@ -218,7 +219,7 @@ export const workflowsRouter = createTRPCRouter({
         }),
 
 
-    execute: premiumProcedure.
+    execute: protectedProcedure.
         input(z.object({ id: z.string(), triggerNodeId: z.string() })).
         mutation(async ({ ctx, input }) => {
            const workflow = await prisma.workFlow.findUniqueOrThrow({
