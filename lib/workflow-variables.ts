@@ -39,6 +39,28 @@ const NODE_OUTPUT_SCHEMA: Record<string, (data: Record<string, unknown>) => Vari
         ];
     },
 
+    [NodeType.JOB_SCRAPER]: (data) => {
+        const varName = (data.variableName as string | undefined) || "jobSearch";
+        return [
+            { path: `${varName}.total`, description: "Number of listings found", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.saved`, description: "Listings inserted or updated in MongoDB", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.freshness`, description: "Selected posting freshness filter", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.jobs`, description: "Job listings with title, company, location, URL, source, and any public HR emails found", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.sourceErrors`, description: "Job boards that could not be reached", nodeId: "", nodeLabel: "" },
+        ];
+    },
+
+    [NodeType.HR_EMAIL_FINDER]: (data) => {
+        const varName = (data.variableName as string | undefined) || "hrContacts";
+        return [
+            { path: `${varName}.scanned`, description: "Matched jobs checked for HR emails", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.found`, description: "Jobs with public HR emails found", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.emailsFound`, description: "Number of public HR email addresses discovered", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.jobs`, description: "Jobs with discovered company websites and HR emails", nodeId: "", nodeLabel: "" },
+            { path: `${varName}.errors`, description: "Company sites that could not be checked", nodeId: "", nodeLabel: "" },
+        ];
+    },
+
     [NodeType.MANUAL_TRIGGER]: (_data) => [],
     [NodeType.INITIAL]:        (_data) => [],
 };

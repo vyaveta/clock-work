@@ -13,7 +13,7 @@ export async function getNodeRealtimeToken(nodeId: string) {
   // TODO: add your auth check
   // e.g. ensure the current user owns this workflow
 
-  const channel = httpRequestChannel({ name: "http-request-execution" });
+  const channel = httpRequestChannel({ name: nodeId });
 
   const token = await getClientSubscriptionToken(inngest, {
     channel,

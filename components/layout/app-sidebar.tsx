@@ -1,12 +1,10 @@
 "use client";
 
 import {
-    CreditCardIcon,
     FolderOpenIcon,
     HistoryIcon,
     KeyIcon,
     LogOutIcon,
-    StarIcon,
 } from 'lucide-react'
 
 import Image from 'next/image';
@@ -24,7 +22,6 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { authClient } from '@/lib/auth-client';
-import { useHasActiveSubcription } from '@/features/subscriptions/hooks/use-subcription';
 
 const menuItems = [
     {
@@ -54,8 +51,6 @@ export const AppSidebar = () => {
 
     const router = useRouter()
     const pathname = usePathname()
-
-    const { hasActiveSubscription, isLoading } = useHasActiveSubcription()
 
     return (
         <Sidebar collapsible='icon' >
@@ -96,29 +91,6 @@ export const AppSidebar = () => {
 
             <SidebarFooter>
                 <SidebarMenu>
-                    {!hasActiveSubscription && !isLoading && 
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            tooltip={"Upgrade to Pro"}
-                            className='gap-x-4 h-10 px-4'
-                            onClick={() => authClient.checkout({ slug: "Clock-Work-Pro" })}
-                        >
-                            <StarIcon className='h-4 w-4' />
-                            <span>Upgrade to Pro</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>  
-                    }
-
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            tooltip={"Billing Portal"}
-                            className='gap-x-4 h-10 px-4'
-                            onClick={() => { }}
-                        >
-                            <CreditCardIcon className='h-4 w-4' />
-                            <span>Billing Portal</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             tooltip={"Sign out"}
