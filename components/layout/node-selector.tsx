@@ -75,6 +75,12 @@ const executionNodes: NodeTypeOptions[] = [
         description: "Search matched jobs and public company contact pages",
         icon: MailSearch,
     },
+    {
+        type: NodeType.GEMINI,
+        label: "Gemini",
+        description:"Use Gemini models for AI tasks",
+        icon: "/logos/gemini.svg",
+    },
 ]
 
 interface NodeSelectorProps {

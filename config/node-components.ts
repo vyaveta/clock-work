@@ -8,6 +8,7 @@ import { StripeTriggerNode } from "@/features/triggers/stripe-trigger/node";
 import { SchedulerNode } from "@/features/triggers/scheduler-trigger/node";
 import { NodeType } from "@/lib/generated/prisma/enums";
 import { NodeTypes } from "@xyflow/react";
+import { GeminiNode } from "@/features/executions/components/gemini/node";
 
 export const nodeComponents = {
     [NodeType.INITIAL]: InitialNode,
@@ -18,6 +19,7 @@ export const nodeComponents = {
     [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTriggerNode,
     [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
     [NodeType.SCHEDULE_TRIGGER]: SchedulerNode,
+    [NodeType.GEMINI]: GeminiNode,
 } as const satisfies NodeTypes
 
 export type RegisterNodeType = keyof typeof nodeComponents
