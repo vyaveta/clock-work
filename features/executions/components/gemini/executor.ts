@@ -1,10 +1,11 @@
-import { NodeType } from "@/lib/generated/prisma/enums";
 import type { NodeExecutor } from "@/features/executions/types";
-import { NonRetriableError } from "inngest";
-import ky, { type Options as KyOptions } from "ky";
-import Handlebars from "handlebars"
-import { httpRequestChannel } from "@/inngest/channels/http-request";
+import { geminiChannel } from "@/inngest/channels/gemini";
 import { inngest } from "@/inngest/client";
+import Handlebars from "handlebars";
+
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateText } from "ai";
+import { NonRetriableError } from "inngest";
 
 Handlebars.registerHelper("json", (context: unknown) => {
     const stringified = JSON.stringify(context, null, 2)
@@ -12,105 +13,93 @@ Handlebars.registerHelper("json", (context: unknown) => {
     return safeStringified
 })
 
-type HttpRequestData = {
-    variableName?: string,
-    endpoint?: string,
-    method?: "GET" | "PUT" | "PATCH" | "POST" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE" | "CONNECT"
-    body?: string,
-    workflowId?: string;
+type GeminiData = {
+    variableName: string,
+    model?: string,
+    systemPrompt?: string,
+    userPrompt?: string,
 }
 
-export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
+export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
     data,
     nodeId,
-    workflowId,
     context,
     step
 }) => {
-    const channel = httpRequestChannel({ name: nodeId });
+    const channel = geminiChannel({ name: nodeId });
 
     try {
+
+        if (!data.variableName) {
+            await inngest.realtime.publish(channel.status, {
+                nodeId,
+                status: "error",
+                error: "variable name missing for gemini node",
+            });
+
+            throw new NonRetriableError("Variable name is not provided for gemini node.")
+        }
+        if (!data.userPrompt) {
+            await inngest.realtime.publish(channel.status, {
+                nodeId,
+                status: "error",
+                error: "user prompt missing for gemini node",
+            });
+
+            throw new NonRetriableError("User prompt is not provided for gemini node.")
+        }
+
         await step.realtime.publish(`status-loading-${nodeId}`, channel.status, {
             nodeId,
             status: "loading",
         });
 
-        const result = await step.run(`http-request-${nodeId}`, async () => {
 
-            if (!data.endpoint) {
-                await step.realtime.publish(`status-error-${nodeId}`, channel.status, {
-                    nodeId,
-                    status: "error",
-                    error: "No endpoint configured",
-                });
+        const systemPrompt = data.systemPrompt ? Handlebars.compile(data.systemPrompt)(context)
+            : "You are a helptful assistant."
 
-                throw new NonRetriableError("Http Request Node: No endpoint configured")
-            }
-            if (!data.variableName) {
-                await step.realtime.publish(`status-error-${nodeId}`, channel.status, {
-                    nodeId,
-                    status: "error",
-                    error: "No variable name configured",
-                });
+        const userPrompt = Handlebars.compile(data.userPrompt)(context)
 
-                throw new NonRetriableError("Http Request Node: No variable name configured")
-            }
-            if (!data.method) {
-                await step.realtime.publish(`status-error-${nodeId}`, channel.status, {
-                    nodeId,
-                    status: "error",
-                    error: "No method configured",
-                });
+        // todo: fetch users creds
+        const credentialValue = process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
-                throw new NonRetriableError("Http Request Node: No method configured")
-            }
 
-            const method = data.method
-            const endpoint = Handlebars.compile(data.endpoint)(context)
+        const google = createGoogleGenerativeAI({
+            apiKey: credentialValue
+        })
 
-            const options: KyOptions = { method }
 
-            if (["POST", "PUT", "PATCH"].includes(method)) {
+        try {
 
-                const resolved = Handlebars.compile(data.body)(context)
-                JSON.parse(resolved)
-                options.body = resolved
-                options.headers = {
-                    "Content-Type": "application/json"
-                }
-            }
+            const { steps } = await step.ai.wrap("google-generative-ai",
+                generateText,
+                {
+                    model: google(data.model || "gemini-2.0-flash"),
+                    system: systemPrompt,
+                    prompt: userPrompt,
+                    experimental_telemetry: {
+                        isEnabled: true,
+                        recordInputs: true,
+                        recordOutputs: true,
+                    }
+                },
+            )
 
-            const response = await ky(endpoint, options)
-            const contentType = response.headers.get("content-type")
-            let responseData: unknown
+            const text = steps[0].content[0].type === "text" ? steps[0].content[0].text : ""
 
-            if (contentType?.includes("application/json")) {
-                responseData = await response.json()
-            } else {
-                responseData = await response.text()
-            }
-
-            const responsePayload = {
-                httpResponse: {
-                    ...response,
-                    status: response.status,
-                    statusText: response.statusText,
-                    data: responseData,
-                }
-            }
+            await step.realtime.publish(`status-success-${nodeId}`, channel.status, {
+                nodeId,
+                status: "success",
+            });
 
             return {
                 ...context,
-                [data.variableName]: responsePayload,
+                [data.variableName]: text
             }
-        })
 
-        await step.realtime.publish(`status-success-${nodeId}`, channel.status, {
-            nodeId,
-            status: "success",
-        });
-
-        return result
+        } catch (err) {
+            throw new NonRetriableError("something went wrong");
+        }
     } catch (err) {
         // ── ERROR ──────────────────────────────────────────────
         const message = err instanceof Error ? err.message : "Unknown error";
@@ -122,6 +111,6 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
             error: message,
         });
 
-        throw err; // rethrow so Inngest still marks the step/run as failed
+        throw new NonRetriableError(message || "something went wrong"); // rethrow so Inngest still marks the step/run as failed
     }
 }
