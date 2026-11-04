@@ -7,6 +7,7 @@ import { stripeTriggerExecutor } from "@/features/triggers/stripe-trigger/execut
 import { jobScraperExecutor } from "@/features/executions/components/job-scraper/executor";
 import { hrEmailFinderExecutor } from "@/features/executions/components/hr-email-finder/executor";
 import { schedulerTriggerExecutor } from "@/features/triggers/scheduler-trigger/executor";
+import { GeminiExecutor } from "../components/gemini/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
     [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -17,6 +18,10 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
     [NodeType.JOB_SCRAPER]: jobScraperExecutor,
     [NodeType.HR_EMAIL_FINDER]: hrEmailFinderExecutor,
     [NodeType.SCHEDULE_TRIGGER]: schedulerTriggerExecutor,
+    [NodeType.GEMINI]: GeminiExecutor,
+    //@ts-ignore temp ts fix, will add real executors for below later
+    [NodeType.ANTHROPIC]: GeminiExecutor,
+    [NodeType.OPENAI]: GeminiExecutor,
 }
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

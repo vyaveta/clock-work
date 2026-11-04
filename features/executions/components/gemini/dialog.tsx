@@ -10,31 +10,26 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import z from "zod"
-import { useEffect } from "react"
-import { isValidEndpoint } from "@/lib/url-utils"
+import { useEffect, useState } from "react"
 import type { VariableInfo } from "@/lib/workflow-variables"
+import { Check, ChevronsUpDown, LoaderCircle, Search } from "lucide-react"
 
-export const AVAILABLE_MODELS = [
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
-  "gemini-1.0-pro",
-  "gemini-pro",
-]
+type GeminiModelOption = {
+  id: string
+  displayName: string
+  description: string
+  badges: string[]
+  freeTier?: boolean
+}
 
-const httpRequestSchema = z.object({
-  model: z.enum(AVAILABLE_MODELS),
+const GeminiSchema = z.object({
+  model: z.string().min(1, { message: "Choose a Gemini model" }),
   systemPrompt: z.string().optional(),
   userPrompt: z.string().min(1, { message: "user prompt is required " }),
   variableName: z
@@ -46,7 +41,7 @@ const httpRequestSchema = z.object({
     }),
 })
 
-export type GeminiFormType = z.infer<typeof httpRequestSchema>
+export type GeminiFormType = z.infer<typeof GeminiSchema>
 
 interface HttpRequestDialogProps {
   open: boolean
@@ -66,11 +61,57 @@ export const GeminiDialog = ({
   defaultValues,
   availableVariables = [],
 }: HttpRequestDialogProps) => {
+  const [availableModels, setAvailableModels] = useState<GeminiModelOption[]>([])
+  const [modelsError, setModelsError] = useState<string | null>(null)
+  const [modelsLoading, setModelsLoading] = useState(false)
+  const [modelsLoaded, setModelsLoaded] = useState(false)
+  const [modelPickerOpen, setModelPickerOpen] = useState(false)
+  const [modelSearch, setModelSearch] = useState("")
+
+  useEffect(() => {
+    if (!open) return
+
+    const controller = new AbortController()
+    setModelsLoading(true)
+    setModelsError(null)
+
+    fetch("/api/gemini/models", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load Gemini models")
+        return (await response.json()) as { models: GeminiModelOption[] }
+      })
+      .then(({ models }) => {
+        setAvailableModels(models)
+        setModelsLoaded(true)
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name === "AbortError") return
+        setModelsError(error instanceof Error ? error.message : "Could not load Gemini models")
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setModelsLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [open])
+
+  const models = availableModels.some((model) => model.id === defaultValues?.model)
+    ? availableModels
+    : !modelsLoaded && defaultValues?.model
+      ? [{ id: defaultValues.model, displayName: defaultValues.model, description: "Previously selected model", badges: ["Text"] }, ...availableModels]
+      : availableModels
+
+  const filteredModels = models.filter((model) =>
+    `${model.id} ${model.displayName} ${model.description} ${model.badges.join(" ")}`
+      .toLowerCase()
+      .includes(modelSearch.trim().toLowerCase()),
+  )
+
   const form = useForm<GeminiFormType>({
-    resolver: zodResolver(httpRequestSchema),
+    resolver: zodResolver(GeminiSchema),
     defaultValues: {
       variableName: defaultValues?.variableName ?? "",
-      model: defaultValues?.model ?? AVAILABLE_MODELS[0],
+      model: defaultValues?.model ?? "",
       systemPrompt: defaultValues?.systemPrompt ?? "",
       userPrompt: defaultValues?.userPrompt ?? "",
     },
@@ -78,7 +119,7 @@ export const GeminiDialog = ({
 
   const watchVariableName = form.watch("variableName") || "gemini"
 
-  const handleSubmit = (values: z.infer<typeof httpRequestSchema>) => {
+  const handleSubmit = (values: z.infer<typeof GeminiSchema>) => {
     onSubmit(values)
     onOpenChange(false)
   }
@@ -88,16 +129,25 @@ export const GeminiDialog = ({
     if (open) {
       form.reset({
         variableName: defaultValues?.variableName ?? "",
-        model: defaultValues?.model ?? AVAILABLE_MODELS[0],
+        model: defaultValues?.model ?? "",
         systemPrompt: defaultValues?.systemPrompt ?? "",
         userPrompt: defaultValues?.userPrompt ?? "",
       })
     }
   }, [open, defaultValues])
 
+  useEffect(() => {
+    if (!open || !modelsLoaded || availableModels.length === 0) return
+    const currentModel = form.getValues("model")
+    if (availableModels.some((model) => model.id === currentModel)) return
+
+    const recommendedModel = availableModels.find((model) => model.id === "gemini-3.8-flash")
+    form.setValue("model", recommendedModel?.id ?? availableModels[0].id, { shouldValidate: true })
+  }, [open, modelsLoaded, availableModels, form])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-2xl ">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] min-w-2xl overflow-y-auto overscroll-contain">
         <DialogHeader>
           <DialogTitle>Gemini</DialogTitle>
           <DialogDescription>
@@ -135,26 +185,105 @@ export const GeminiDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="http-variableName">Choose model</FieldLabel>
-                 <Select
-                 onValueChange={field.onChange}
-                 defaultValue={field.value}
-                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
+                  <FieldLabel>Choose model</FieldLabel>
+                    <Popover open={modelPickerOpen} onOpenChange={(nextOpen) => {
+                      setModelPickerOpen(nextOpen)
+                      if (nextOpen) setModelSearch("")
+                    }}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={modelPickerOpen}
+                        className="h-auto min-h-10 w-full justify-between py-2 text-left font-normal"
+                      >
+                        <span className="flex min-w-0 flex-col items-start gap-0.5">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate">{models.find((model) => model.id === field.value)?.displayName ?? "Search Gemini models…"}</span>
+                            {models.find((model) => model.id === field.value)?.freeTier && (
+                              <Badge variant="secondary" className="h-5 shrink-0 border-emerald-500/30 bg-emerald-500/10 px-1.5 text-[10px] text-emerald-700 dark:text-emerald-400">Free</Badge>
+                            )}
+                          </span>
+                          {field.value && <span className="truncate text-xs text-muted-foreground">{field.value}</span>}
+                        </span>
+                        <ChevronsUpDown className="ml-2 size-4 shrink-0 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-h-[calc(100dvh-2rem)] w-(--radix-popover-trigger-width) min-w-80 overflow-hidden p-0" align="start">
+                      <div className="flex items-center gap-2 border-b px-3">
+                        <Search className="size-4 shrink-0 text-muted-foreground" />
+                        <Input
+                          autoFocus
+                          aria-label="Search Gemini models"
+                          placeholder="Search models or capabilities…"
+                          value={modelSearch}
+                          onChange={(event) => setModelSearch(event.target.value)}
+                          className="h-10 border-0 px-0 shadow-none focus-visible:ring-0"
+                        />
+                      </div>
+                      <div
+                        role="listbox"
+                        aria-label="Gemini models"
+                        className="overscroll-contain"
+                        style={{ height: "min(18rem, 50dvh)", overflowY: "auto", scrollbarGutter: "stable" }}
+                        onWheel={(event) => {
+                          const list = event.currentTarget
+                          const maxScroll = list.scrollHeight - list.clientHeight
+                          const nextScroll = Math.max(0, Math.min(maxScroll, list.scrollTop + event.deltaY))
 
-                  <SelectContent>
-                    {
-                      AVAILABLE_MODELS.map((model, i) => (
-                        <SelectItem key={`model${i}`} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-
-                 </Select>
+                          if (maxScroll > 0 && nextScroll !== list.scrollTop) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            list.scrollTop = nextScroll
+                          }
+                        }}
+                      >
+                        {modelsLoading && (
+                          <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                            <LoaderCircle className="size-4 animate-spin" /> Loading Gemini models…
+                          </div>
+                        )}
+                        {!modelsLoading && filteredModels.length === 0 && (
+                          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                            {models.length === 0 ? "No Gemini models are available." : "No models match your search."}
+                          </div>
+                        )}
+                        {!modelsLoading && filteredModels.map((model) => (
+                          <button
+                            key={model.id}
+                            type="button"
+                            role="option"
+                            aria-selected={field.value === model.id}
+                            onClick={() => {
+                              field.onChange(model.id)
+                              setModelPickerOpen(false)
+                            }}
+                            className="flex w-full items-start gap-2 border-b px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                          >
+                            <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
+                              {field.value === model.id && <Check className="size-4" />}
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col gap-1">
+                              <span className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-medium">{model.displayName}</span>
+                                {model.badges.map((badge) => (
+                                  <Badge key={badge} variant="secondary" className={`h-5 px-1.5 text-[10px] ${badge === "Free" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : ""}`}>{badge}</Badge>
+                                ))}
+                              </span>
+                              <span className="truncate text-xs text-muted-foreground">{model.id}</span>
+                              {model.description && <span className="line-clamp-2 text-xs text-muted-foreground">{model.description}</span>}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {modelsLoading && <FieldDescription>Loading available Gemini models…</FieldDescription>}
+                  {modelsError && <FieldError>{modelsError}</FieldError>}
+                  {!modelsLoading && !modelsError && models.length === 0 && (
+                    <FieldDescription>No Gemini models are available for this API key.</FieldDescription>
+                  )}
                   <FieldDescription>
                    The google gemini model to use for this completion
                   </FieldDescription>

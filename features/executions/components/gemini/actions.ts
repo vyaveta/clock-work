@@ -1,9 +1,9 @@
 // app/actions/realtime.ts  (or wherever you keep server actions)
 "use server";
 
-import { getClientSubscriptionToken } from "inngest/react";
+import { geminiChannel } from "@/inngest/channels/gemini";
 import { inngest } from "@/inngest/client";
-import { httpRequestChannel } from "@/inngest/channels/http-request";
+import { getClientSubscriptionToken } from "inngest/react";
 
 export async function getNodeRealtimeToken(nodeId: string) {
   if (!nodeId) {
@@ -13,7 +13,7 @@ export async function getNodeRealtimeToken(nodeId: string) {
   // TODO: add your auth check
   // e.g. ensure the current user owns this workflow
 
-  const channel = httpRequestChannel({ name: nodeId });
+  const channel = geminiChannel({ name: nodeId });
 
   const token = await getClientSubscriptionToken(inngest, {
     channel,

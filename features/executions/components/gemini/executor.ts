@@ -14,7 +14,7 @@ Handlebars.registerHelper("json", (context: unknown) => {
 })
 
 type GeminiData = {
-    variableName: string,
+    variableName?: string,
     model?: string,
     systemPrompt?: string,
     userPrompt?: string,
@@ -62,6 +62,9 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
 
         // todo: fetch users creds
         const credentialValue = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+        if (!credentialValue) {
+            throw new NonRetriableError("GOOGLE_GENERATIVE_AI_API_KEY is not configured")
+        }
 
 
         const google = createGoogleGenerativeAI({
@@ -98,7 +101,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
             }
 
         } catch (err) {
-            throw new NonRetriableError("something went wrong");
+            throw err;
         }
     } catch (err) {
         // ── ERROR ──────────────────────────────────────────────

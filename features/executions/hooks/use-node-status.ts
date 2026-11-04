@@ -8,13 +8,15 @@ import { googleFormTriggerChannel } from "@/inngest/channels/google-form-trigger
 import { manualTriggerChannel } from "@/inngest/channels/manual-trigger";
 import { schedulerTriggerChannel } from "@/inngest/channels/scheduler-trigger";
 import { jobScraperChannel } from "@/inngest/channels/job-scraper";
+import { geminiChannel } from "@/inngest/channels/gemini";
 
-type SupportedChannel =
+export type SupportedChannel =
   | ReturnType<typeof httpRequestChannel>
   | ReturnType<typeof googleFormTriggerChannel>
   | ReturnType<typeof manualTriggerChannel>
   | ReturnType<typeof schedulerTriggerChannel>
-  | ReturnType<typeof jobScraperChannel>;
+  | ReturnType<typeof jobScraperChannel>
+  | ReturnType<typeof geminiChannel>;
 
 interface UseNodeStatusOptions {
   nodeId: string;

@@ -4,8 +4,10 @@ import { BaseExecutionNode } from "@/features/executions/components/base-executi
 import { useReactFlow, type Node, type NodeProps } from "@xyflow/react"
 import { GlobeIcon } from "lucide-react"
 import { memo, useMemo, useState } from "react"
-import { AVAILABLE_MODELS, GeminiDialog, GeminiFormType } from "./dialog"
+import { GeminiDialog, GeminiFormType } from "./dialog"
 import { getUpstreamVariables } from "@/lib/workflow-variables"
+import { getNodeRealtimeToken } from "./actions"
+import { geminiChannel } from "@/inngest/channels/gemini"
 
 
 type GeminiNodeData = {
@@ -54,7 +56,7 @@ export const GeminiNode = memo((props: NodeProps<GeminiNodeType>) => {
         [dialogOpen, props.id],
     )
 
-    const description = nodeData?.userPrompt ? `${nodeData.model || AVAILABLE_MODELS[0]}: ${nodeData.userPrompt.slice(0, 50)}...` : "Not Configured"
+    const description = nodeData?.userPrompt ? `${nodeData.model || "Gemini"}: ${nodeData.userPrompt.slice(0, 50)}...` : "Not Configured"
 
     return (
         <>
@@ -68,6 +70,8 @@ export const GeminiNode = memo((props: NodeProps<GeminiNodeType>) => {
                 name="Gemini"
                 description={description}
                 Icon={'/logos/gemini.svg'}
+                refreshStatusToken={() => getNodeRealtimeToken(props.id)}
+                statusChannel={geminiChannel({ name: props.id })}
                 onSettings={handleDialogOpen}
                 onDoubleClick={handleDialogOpen}
             />
