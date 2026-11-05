@@ -11,6 +11,7 @@ import { useState } from "react"
 import { authClient } from "@/lib/auth-client"
 import Link from "next/link"
 import { MailIcon } from "lucide-react"
+import { getAuthErrorMessage } from "@/features/auth/lib/auth-error-message"
 
 import {
     Field,
@@ -53,30 +54,30 @@ const LoginForm = () => {
 
     const onSubmit = async (values: LoginSchema) => {
         setError(null)
-        const { error } = await authClient.signIn.email({
-            email: values.email,
-            password: values.password,
-        })
+        try {
+            const { error } = await authClient.signIn.email({
+                email: values.email,
+                password: values.password,
+            })
 
-        if (error) {
-            setError(error.message ?? "Something went wrong. Please try again.")
-        } else {
-            router.push("/")
+            if (error) {
+                setError(getAuthErrorMessage(error, "We couldn’t sign you in. Please try again."))
+            } else {
+                router.push("/")
+            }
+        } catch (error) {
+            setError(getAuthErrorMessage(error, "We couldn’t sign you in. Please try again."))
         }
     }
 
-    const handleGoogleLogin = async () => {
-        await authClient.signIn.social({
-            provider: "google",
-            callbackURL: "/",
-        })
-    }
-
-    const handleGithubLogin = async () => {
-        await authClient.signIn.social({
-            provider: "github",
-            callbackURL: "/",
-        })
+    const handleSocialLogin = async (provider: "google" | "github") => {
+        setError(null)
+        try {
+            const { error } = await authClient.signIn.social({ provider, callbackURL: "/" })
+            if (error) setError(getAuthErrorMessage(error, `We couldn’t sign in with ${provider === "google" ? "Google" : "GitHub"}. Please try again.`))
+        } catch (error) {
+            setError(getAuthErrorMessage(error, `We couldn’t sign in with ${provider === "google" ? "Google" : "GitHub"}. Please try again.`))
+        }
     }
 
     return (
@@ -98,7 +99,7 @@ const LoginForm = () => {
                                 className="w-full"
                                 type="button"
                                 disabled={isPending}
-                                onClick={handleGithubLogin}
+                                onClick={() => handleSocialLogin("github")}
                             >
                                 <Image src={"/logos/github.svg"} width={20} height={20} alt="Github"/>
                                 Continue with GitHub
@@ -109,7 +110,7 @@ const LoginForm = () => {
                                 className="w-full"
                                 type="button"
                                 disabled={isPending}
-                                onClick={handleGoogleLogin}
+                                onClick={() => handleSocialLogin("google")}
                             >
                                <Image src={"/logos/google.svg"} width={20} height={20} alt="Google"/>
                                 Continue with Google

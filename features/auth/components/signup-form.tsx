@@ -28,8 +28,8 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { authClient } from "@/lib/auth-client"
-import { toast } from "sonner"
 import Image from "next/image"
+import { getAuthErrorMessage } from "@/features/auth/lib/auth-error-message"
 
 const signupSchema = z
     .object({
@@ -37,7 +37,7 @@ const signupSchema = z
         email: z.email("Please enter a valid email address"),
         password: z
             .string()
-            .min(1, "Password is required"),
+            .min(8, "Password must be at least 8 characters"),
         confirmPassword: z.string().min(1, "Please confirm your password"),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -51,6 +51,7 @@ const SignupForm = () => {
     const router = useRouter()
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const form = useForm<SignupSchema>({
         resolver: zodResolver(signupSchema),
@@ -65,29 +66,36 @@ const SignupForm = () => {
     const isPending = form.formState.isSubmitting
 
     const onSubmit = async (values: SignupSchema) => {
-        await authClient.signUp.email({
-            email: values.email,
-            name: values.name,
-            password: values.password,
-        },
-    {
-        onSuccess: () => {
+        setError(null)
+        try {
+            const { error: authError } = await authClient.signUp.email({
+                email: values.email,
+                name: values.name,
+                password: values.password,
+            })
+
+            if (authError) {
+                setError(getAuthErrorMessage(authError, "We couldn’t create your account. Please try again."))
+                return
+            }
+
             router.push("/")
             router.refresh()
-        },
-        onError: (error: any) => {
-            console.log(error, "is the error")
-            toast.error(error?.message ?? "something went wrong")
+        } catch (error) {
+            setError(getAuthErrorMessage(error, "We couldn’t create your account. Please try again."))
         }
-    })
     }
 
-    const handleGoogleSignup = async () => {
-
-    }
-
-    const handleGithubSignup = async () => {
-
+    const handleSocialSignup = async (provider: "google" | "github") => {
+        setError(null)
+        try {
+            const { error: authError } = await authClient.signIn.social({ provider, callbackURL: "/" })
+            if (authError) {
+                setError(getAuthErrorMessage(authError, `We couldn’t sign up with ${provider === "google" ? "Google" : "GitHub"}. Please try again.`))
+            }
+        } catch (error) {
+            setError(getAuthErrorMessage(error, `We couldn’t sign up with ${provider === "google" ? "Google" : "GitHub"}. Please try again.`))
+        }
     }
 
     return (
@@ -109,7 +117,7 @@ const SignupForm = () => {
                                 className="w-full"
                                 type="button"
                                 disabled={isPending}
-                                onClick={handleGithubSignup}
+                                onClick={() => handleSocialSignup("github")}
                             >
                                <Image src={"/logos/github.svg"} width={20} height={20} alt="Github"/>
                                 Continue with GitHub
@@ -120,7 +128,7 @@ const SignupForm = () => {
                                 className="w-full"
                                 type="button"
                                 disabled={isPending}
-                                onClick={handleGoogleSignup}
+                                onClick={() => handleSocialSignup("google")}
                             >
                                <Image src={"/logos/google.svg"} width={20} height={20} alt="Google"/>
                                 Continue with Google
@@ -263,6 +271,12 @@ const SignupForm = () => {
                                         </Field>
                                     )}
                                 />
+
+                                {error && (
+                                    <div role="alert" aria-live="polite" className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <Button
                                     type="submit"
