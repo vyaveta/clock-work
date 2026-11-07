@@ -9,6 +9,7 @@ import {
     GlobeIcon,
     MailSearch,
     MousePointerIcon,
+    ZapIcon,
 } from "lucide-react"
 import {
     Sheet,
@@ -80,6 +81,12 @@ const executionNodes: NodeTypeOptions[] = [
         label: "Gemini",
         description:"Use Gemini models for AI tasks",
         icon: "/logos/gemini.svg",
+    },
+    {
+        type: NodeType.GROQ,
+        label: "Groq",
+        description: "Run prompts with Groq-hosted models",
+        icon: ZapIcon,
     },
 ]
 
