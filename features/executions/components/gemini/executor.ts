@@ -95,6 +95,8 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
                 status: "success",
             });
 
+            console.log("context is", context)
+
             return {
                 ...context,
                 [data.variableName]: text

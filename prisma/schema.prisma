@@ -99,6 +99,7 @@ enum NodeType {
   ANTHROPIC
   GEMINI
   OPENAI
+  GROQ
 }
 
 model SchedulerOccurrence {
