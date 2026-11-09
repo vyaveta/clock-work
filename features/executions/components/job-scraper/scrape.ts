@@ -22,6 +22,7 @@ export type JobListing = {
   source: JobSource;
   companyWebsite?: string;
   hrEmails?: string[];
+  description?: string;
 };
 
 const sourceHosts: Record<JobSource, string> = {
@@ -86,6 +87,7 @@ function parseJsonLd(value: unknown, source: JobSource, base: string): JobListin
         .filter((part): part is string => typeof part === "string").join(", ") || "Location not listed",
       url: url ?? base,
       source,
+      ...(typeof job.description === "string" ? { description: job.description } : {}),
       ...(website ? { companyWebsite: website } : {}),
       ...(hrEmails.length ? { hrEmails } : {}),
     }];
@@ -126,6 +128,7 @@ function extractListings(html: string, source: JobSource, base: string): JobList
         location: card.find(".job-search-card__location, .companyLocation, .loc, .locWdth").first().text().trim() || "Location not listed",
         url,
         source,
+        description: card.find(".description, .job-description, [data-testid='jobDescriptionText']").text().trim() || undefined,
         ...(website ? { companyWebsite: website } : {}),
         ...(hrEmails.length ? { hrEmails } : {}),
       });

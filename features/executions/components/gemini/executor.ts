@@ -67,6 +67,14 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
         }
 
 
+        const modelId = data.model?.replace(/^models\//, "").trim();
+        if (!modelId) {
+            throw new NonRetriableError("Choose a Gemini model in the node settings before running this workflow.");
+        }
+        if (/^gemini-2\.0-flash(?:-|$)/.test(modelId)) {
+            throw new NonRetriableError("Gemini 2.0 Flash has been shut down. Reopen this node, choose an available model, and save the workflow.");
+        }
+
         const google = createGoogleGenerativeAI({
             apiKey: credentialValue
         })
@@ -77,7 +85,7 @@ export const GeminiExecutor: NodeExecutor<GeminiData> = async ({
             const { steps } = await step.ai.wrap("google-generative-ai",
                 generateText,
                 {
-                    model: google(data.model || "gemini-2.0-flash"),
+                    model: google(modelId),
                     system: systemPrompt,
                     prompt: userPrompt,
                     experimental_telemetry: {

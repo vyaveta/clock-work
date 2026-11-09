@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const revalidate = 86400;
+export const revalidate = 300;
 
 type GeminiModel = {
   name?: string;
@@ -24,9 +24,9 @@ const freeTierModelIds = new Set([
   "gemini-2.5-flash-lite",
 ]);
 
-// The API catalog can still list this model even though Google rejects it for
-// newly provisioned API users. Prefer the currently recommended stable model.
-const unavailableForNewUsers = /^gemini-2\.5-flash(?:-\d{3})?$/;
+// Gemini 2.0 Flash and Flash-Lite have shut down. Gemini 2.5 Flash is
+// excluded for API projects where Google does not provision it.
+const unavailableModelId = /^gemini-2\.0-flash(?:-|$)|^gemini-2\.5-flash(?:-\d{3})?$/;
 
 export async function GET() {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -47,7 +47,7 @@ export async function GET() {
       url.searchParams.set("key", apiKey);
       if (pageToken) url.searchParams.set("pageToken", pageToken);
 
-      const response = await fetch(url, { next: { revalidate: 86400 } });
+      const response = await fetch(url, { next: { revalidate: 300 } });
       if (!response.ok) {
         return NextResponse.json(
           { error: "Unable to load Gemini models" },
@@ -64,7 +64,7 @@ export async function GET() {
       .filter((model) => model.supportedGenerationMethods?.includes("generateContent"))
       .flatMap((model) => {
         const id = model.name?.replace(/^models\//, "");
-        if (!id || unavailableForNewUsers.test(id)) return [];
+        if (!id || unavailableModelId.test(id)) return [];
 
         const searchText = `${id} ${model.displayName ?? ""} ${model.description ?? ""}`.toLowerCase();
         const badges = ["Text"];

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const revalidate = 86400;
+export const revalidate = 300;
 
 type GroqModel = {
   id?: string;
@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const response = await fetch("https://api.groq.com/openai/v1/models", {
       headers: { Authorization: `Bearer ${apiKey}` },
-      next: { revalidate: 86400 },
+      next: { revalidate: 300 },
     });
 
     if (!response.ok) {

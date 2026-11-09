@@ -37,7 +37,9 @@ export const getMongoDatabase = async (): Promise<Db> => {
 
     if (!mongoGlobal.__clockWorkJobIndexesPromise) {
         mongoGlobal.__clockWorkJobIndexesPromise = database.collection("matched_jobs").createIndexes([
-            { key: { userId: 1, dedupeKey: 1 }, name: "unique_user_job", unique: true },
+            // Job uniqueness is enforced by the Mongoose schema on (userId, url).
+            // Do not index the unused dedupeKey field: legacy documents omit it,
+            // which makes every missing value null under a unique index.
             { key: { userId: 1, matchScore: -1 }, name: "user_match_score" },
             { key: { userId: 1, "location.country": 1 }, name: "user_job_country" },
         ]).then(() => undefined);
