@@ -39,6 +39,15 @@ const NODE_OUTPUT_SCHEMA: Record<string, (data: Record<string, unknown>) => Vari
         ];
     },
 
+    [NodeType.GMAIL_SEND]: (data) => {
+        const varName = (data.variableName as string | undefined) || "emailResult";
+        return [
+            { path: varName + ".messageId", description: "Gmail message ID", nodeId: "", nodeLabel: "" },
+            { path: varName + ".threadId", description: "Gmail thread ID", nodeId: "", nodeLabel: "" },
+            { path: varName + ".sent", description: "Whether Gmail accepted the message", nodeId: "", nodeLabel: "" },
+        ];
+    },
+
     [NodeType.JOB_SCRAPER]: (data) => {
         const varName = (data.variableName as string | undefined) || "jobSearch";
         return [
