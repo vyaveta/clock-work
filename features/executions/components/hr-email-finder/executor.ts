@@ -3,7 +3,7 @@ import type { NodeExecutor } from "@/features/executions/types";
 import { httpRequestChannel } from "@/inngest/channels/http-request";
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getMatchedJobsNeedingHrEmails, updateMatchedJobHrEmails } from "../job-scraper/store";
+import { getMatchedJobsNeedingHrEmails, getMatchedJobsWithHrEmails, updateMatchedJobHrEmails } from "../job-scraper/store";
 import { findCompanyHrEmails } from "./scrape";
 
 type HrEmailFinderData = {
@@ -25,7 +25,7 @@ export const hrEmailFinderExecutor: NodeExecutor<HrEmailFinderData> = async ({ d
     if (!workflow) throw new NonRetriableError("HR Email Finder: Workflow owner could not be found");
 
     const jobs = await step.run(`hr-email-load-matched-jobs-${nodeId}`, async () => {
-      const matchedJobs = await getMatchedJobsNeedingHrEmails(workflow.userId, maxJobs);
+      const matchedJobs = await getMatchedJobsNeedingHrEmails(workflow.userId, workflowId, maxJobs);
       return matchedJobs.map((job) => ({ ...job, _id: String(job._id) }));
     });
     const results: Array<{
@@ -94,6 +94,20 @@ export const hrEmailFinderExecutor: NodeExecutor<HrEmailFinderData> = async ({ d
     }
 
     const found = results.filter((result) => result.hrEmails.length > 0).length;
+    await step.run("hr-email-outreach-tasks-" + nodeId, async () => {
+      const jobsWithEmails = await getMatchedJobsWithHrEmails(workflow.userId, workflowId);
+      const tasks = jobsWithEmails.flatMap((job) => job.hrEmails.map((contactEmail) => ({
+        userId: workflow.userId,
+        workflowId,
+        jobId: String(job._id),
+        contactEmail: contactEmail.toLowerCase(),
+        jobTitle: job.title,
+        company: job.company,
+        jobUrl: job.url,
+      })));
+      if (tasks.length) await prisma.outreachTask.createMany({ data: tasks, skipDuplicates: true });
+      return { createdCandidates: tasks.length };
+    });
     await step.realtime.publish(`status-success-${nodeId}`, channel.status, { nodeId, status: "success" });
     return {
       ...context,

@@ -137,55 +137,33 @@ export const GeminiDialog = ({
   }, [open, defaultValues])
 
   useEffect(() => {
-    if (!open || !modelsLoaded || availableModels.length === 0) return
+    if (!open || !modelsLoaded) return
     const currentModel = form.getValues("model")
-    if (availableModels.some((model) => model.id === currentModel)) return
+    if (!currentModel || availableModels.some((model) => model.id === currentModel)) return
 
-    const recommendedModel = availableModels.find((model) => model.id === "gemini-3.8-flash")
-    form.setValue("model", recommendedModel?.id ?? availableModels[0].id, { shouldValidate: true })
+    // Ask the user to choose again when a saved model is no longer available.
+    form.setValue("model", "", { shouldValidate: true })
   }, [open, modelsLoaded, availableModels, form])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] min-w-2xl overflow-y-auto overscroll-contain">
-        <DialogHeader>
-          <DialogTitle>Gemini</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <DialogHeader className="border-b px-6 py-5 pr-12">
+          <DialogTitle className="text-lg font-semibold">Gemini</DialogTitle>
+          <DialogDescription className="max-w-2xl">
             Configure the AI model and prompt
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-4">
-          <FieldGroup>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-h-0 flex-1 flex-col">
+          <FieldGroup className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
 
-            <Controller
-              name="variableName"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="http-variableName">Variable name</FieldLabel>
-                  <Input
-                    {...field}
-                    id="http-variableName"
-                    placeholder={watchVariableName}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  <FieldDescription>
-                    The results of this node will be stored in a variable to use in other nodes
-                    {`{{${watchVariableName}.httpResponse.data}}`}
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
             <Controller
               name="model"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Choose model</FieldLabel>
+                  <FieldLabel>AI model <span className="text-xs font-normal text-muted-foreground">Required</span></FieldLabel>
                     <Popover open={modelPickerOpen} onOpenChange={(nextOpen) => {
                       setModelPickerOpen(nextOpen)
                       if (nextOpen) setModelSearch("")
@@ -200,7 +178,7 @@ export const GeminiDialog = ({
                       >
                         <span className="flex min-w-0 flex-col items-start gap-0.5">
                           <span className="flex min-w-0 items-center gap-2">
-                            <span className="truncate">{models.find((model) => model.id === field.value)?.displayName ?? "Search Gemini models…"}</span>
+                            <span className="truncate">{models.find((model) => model.id === field.value)?.displayName ?? "Choose a Gemini model…"}</span>
                             {models.find((model) => model.id === field.value)?.freeTier && (
                               <Badge variant="secondary" className="h-5 shrink-0 border-emerald-500/30 bg-emerald-500/10 px-1.5 text-[10px] text-emerald-700 dark:text-emerald-400">Free</Badge>
                             )}
@@ -285,7 +263,7 @@ export const GeminiDialog = ({
                     <FieldDescription>No Gemini models are available for this API key.</FieldDescription>
                   )}
                   <FieldDescription>
-                   The google gemini model to use for this completion
+                   Select a currently available model for this workflow step.
                   </FieldDescription>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -294,6 +272,27 @@ export const GeminiDialog = ({
               )}
             />
            
+            <Controller
+              name="variableName"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="gemini-variable-name">Variable name</FieldLabel>
+                  <Input
+                    {...field}
+                    id="gemini-variable-name"
+                    placeholder={watchVariableName}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  <FieldDescription>
+                    Downstream nodes can use this result as {`{{$watchVariableName}}`}.
+                  </FieldDescription>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
               <Controller
                 name="systemPrompt"
                 control={form.control}
@@ -361,7 +360,7 @@ export const GeminiDialog = ({
             )}
           </FieldGroup>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 border-t bg-muted/30 px-6 py-4">
             <Button
               type="button"
               variant="outline"

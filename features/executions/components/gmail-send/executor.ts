@@ -5,7 +5,7 @@ import prisma from "@/lib/db";
 
 type GmailSendData = { variableName?: string; to?: string; subject?: string; body?: string };
 
-async function sendGmailMessage(userId: string, to: string, subject: string, body: string) {
+export async function sendGmailMessage(userId: string, to: string, subject: string, body: string, attachment?: { fileName: string; mimeType: string; content: Uint8Array }) {
   const account = await prisma.account.findFirst({
     where: {
       userId,
@@ -35,9 +35,30 @@ async function sendGmailMessage(userId: string, to: string, subject: string, bod
     });
   }
 
-  const mime = [
+  const encodedSubject = Buffer.from(subject.replace(/[\r\n]/g, " "), "utf8").toString("base64");
+  const safeName = attachment?.fileName.replace(/[\r\n"]/g, "_");
+  const boundary = "clockwork-" + crypto.randomUUID();
+  const mime = attachment ? [
     `To: ${to}`,
-    `Subject: =?UTF-8?B?${Buffer.from(subject.replace(/[\r\n]/g, " "), "utf8").toString("base64")}?=`,
+    `Subject: =?UTF-8?B?${encodedSubject}?=`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    body,
+    `--${boundary}`,
+    `Content-Type: ${attachment.mimeType}; name="${safeName}"`,
+    `Content-Disposition: attachment; filename="${safeName}"`,
+    "Content-Transfer-Encoding: base64",
+    "",
+    Buffer.from(attachment.content).toString("base64").replace(/.{1,76}/g, "$&\r\n"),
+    `--${boundary}--`,
+  ].join("\r\n") : [
+    `To: ${to}`,
+    `Subject: =?UTF-8?B?${encodedSubject}?=`,
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=UTF-8",
     "",

@@ -18,6 +18,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   workflows     WorkFlow[]
+  outreachTasks OutreachTask[]
+  resume        ResumeAsset?
 
   @@unique([email])
   @@map("user")
@@ -82,9 +84,47 @@ model WorkFlow {
 
   nodes Node[]
   connections Connection[]
+  outreachTasks OutreachTask[]
 
   @@index([userId])
   @@map("workflow")
+}
+
+model OutreachTask {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflowId     String
+  workflow       WorkFlow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  jobId          String
+  contactEmail   String
+  jobTitle       String
+  company        String
+  jobUrl         String
+  status         String   @default("contact_found")
+  gmailMessageId String?
+  replyStatus    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([workflowId, jobId, contactEmail])
+  @@index([userId, createdAt])
+  @@index([workflowId, status])
+  @@map("outreach_task")
+}
+
+model ResumeAsset {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  content      Bytes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("resume_asset")
 }
 
 enum NodeType {

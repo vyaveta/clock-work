@@ -5,6 +5,7 @@ import {
     HistoryIcon,
     KeyIcon,
     LogOutIcon,
+    ChartNoAxesCombinedIcon,
 } from 'lucide-react'
 
 import Image from 'next/image';
@@ -44,6 +45,16 @@ const menuItems = [
             },
 
         ]
+    },
+    {
+        title: "Campaign",
+        items: [
+            {
+                title: "Job Search Campaign",
+                icon: ChartNoAxesCombinedIcon,
+                url: "/campaigns/jobs",
+            },
+        ],
     }
 ]
 

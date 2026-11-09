@@ -67,6 +67,11 @@ export const GroqExecutor: NodeExecutor<GroqData> = async ({
         }
 
 
+        const modelId = data.model?.trim();
+        if (!modelId) {
+            throw new NonRetriableError("Choose a Groq model in the node settings before running this workflow.");
+        }
+
         const groq = createGroq({
             apiKey: credentialValue
         })
@@ -78,7 +83,7 @@ export const GroqExecutor: NodeExecutor<GroqData> = async ({
                 generateText,
                 {
                     //@ts-ignore
-                    model: groq(data.model || "openai/gpt-oss-20b"),
+                    model: groq(modelId),
                     system: systemPrompt,
                     prompt: userPrompt,
                     experimental_telemetry: {
