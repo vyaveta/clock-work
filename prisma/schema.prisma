@@ -100,6 +100,7 @@ enum NodeType {
   GEMINI
   OPENAI
   GROQ
+  GMAIL_SEND
 }
 
 model SchedulerOccurrence {

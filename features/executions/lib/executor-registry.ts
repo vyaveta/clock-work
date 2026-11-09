@@ -9,6 +9,7 @@ import { hrEmailFinderExecutor } from "@/features/executions/components/hr-email
 import { schedulerTriggerExecutor } from "@/features/triggers/scheduler-trigger/executor";
 import { GeminiExecutor } from "../components/gemini/executor";
 import { GroqExecutor } from "../components/groq/executor";
+import { gmailSendExecutor } from "../components/gmail-send/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
     [NodeType.MANUAL_TRIGGER]: manualTriggerExecutor,
@@ -21,6 +22,7 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
     [NodeType.SCHEDULE_TRIGGER]: schedulerTriggerExecutor,
     [NodeType.GEMINI]: GeminiExecutor,
     [NodeType.GROQ]: GroqExecutor,
+    [NodeType.GMAIL_SEND]: gmailSendExecutor,
     //@ts-ignore temp ts fix, will add real executors for below later
     [NodeType.ANTHROPIC]: GeminiExecutor,
     [NodeType.OPENAI]: GeminiExecutor,

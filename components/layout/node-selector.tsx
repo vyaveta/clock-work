@@ -8,6 +8,7 @@ import {
     CalendarClockIcon,
     GlobeIcon,
     MailSearch,
+    Mail,
     MousePointerIcon,
     ZapIcon,
 } from "lucide-react"
@@ -58,6 +59,12 @@ const triggerNodes: NodeTypeOptions[] = [
 ]
 
 const executionNodes: NodeTypeOptions[] = [
+    {
+        type: NodeType.GMAIL_SEND,
+        label: "Send Gmail",
+        description: "Send an email from your connected Google account",
+        icon: Mail,
+    },
     {
         type: NodeType.HTTP_REQUEST,
         label: "HTTP Request",
